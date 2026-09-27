@@ -18,6 +18,7 @@ The MVP is working locally with a subset of the plan:
 | `requests` + `psycopg` v3 + SQLAlchemy (ingest/reads) | ✅ in use |
 | Streamlit with native charts (`st.map`, `st.bar_chart`, `st.dataframe`) | ✅ in use |
 | `pandas` for query results in the dashboard | ✅ in use |
+| Python app containerized (`app` service + `app/Dockerfile`) | ✅ in use |
 | Scheduling (cron / Prefect / Airflow) | ⏳ still manual on-demand runs |
 | dbt / Great Expectations | ⏳ not yet — Stage 3 |
 

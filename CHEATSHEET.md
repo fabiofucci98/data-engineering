@@ -33,9 +33,17 @@
 | Stop (keep data) | `docker compose down` |
 | Stop + destroy volumes | `docker compose down -v` |
 | Exec in db container | `docker compose exec -T db psql -U postgres -d scientific_data -c "SELECT 1"` |
+| Build the app image | `docker compose build app` |
+| Run ingest in the container | `docker compose run --rm app python ingest.py` |
+| Start the dashboard (in container) | `docker compose up -d app` |
+| Rebuild + restart app | `docker compose up -d --build app` |
+| App logs | `docker compose logs -f app` |
 
 Key `docker-compose.yml` syntax (verified):
 - Port mapping `"${POSTGRES_PORT:-5433}:5432"` → `host:container`
+- **Service-to-service networking**: inside the Compose network the app reaches Postgres
+  via hostname `db` on internal port `5432`; from the host the same DB is `localhost:5433`.
+  That's why the `app` service overrides `POSTGRES_HOST` / `POSTGRES_PORT`.
 - Named volume: `db_data:/var/lib/postgresql/data`
 - **Auto-init on first boot**: mount `./sql:/docker-entrypoint-initdb.d:ro` — runs `*.sql`
   alphabetically, but ONLY when the data volume is empty

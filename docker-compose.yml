@@ -36,6 +36,26 @@ services:
       db:
         condition: service_healthy
 
+  app:
+    build: ./app
+    container_name: sdp-app
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-scientific_data}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      # Inside the Docker network, Postgres is reached by service name + internal port.
+      POSTGRES_HOST: db
+      POSTGRES_PORT: "5432"
+    ports:
+      - "${STREAMLIT_PORT:-8501}:8501"
+    volumes:
+      # Live code volume: edit ./app without rebuilding while developing.
+      - ./app:/app
+    depends_on:
+      db:
+        condition: service_healthy
+
 volumes:
   db_data:
   pgadmin_data:
