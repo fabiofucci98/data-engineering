@@ -1,59 +1,53 @@
 # Devlog
 
 A **chronological journal** of this project's evolution — and of **your learning journey**.
-Every meaningful milestone, decision, blocker, discovery, and "aha!" gets a dated entry.
-The devlog keeps the *"why"* alive: the reasoning behind choices, what you learned,
-what you struggled with, and how you solved it.
+It records the *why*: the reasoning behind choices, what you learned, what you struggled
+with, and how you solved it.
 
 ## Conventions
 
-- **One file per entry** — never append to an old entry; create a new one.
-- **File name format:** `YYYY-MM-DD-short-slug.md` (e.g., `2026-09-27-project-init.md`).
-- **Status emoji** in the first line of each entry:
-  - 🟢 on track / completed
-  - 🟡 in progress / at risk
-  - 🔴 blocked / failed attempt (recorded honestly)
-- **Standard template** — includes both *project* and *learning* sections:
+- **One file per day** — every calendar day gets exactly one file: `YYYY-MM-DD.md`
+  (e.g., `2026-09-27.md`). Never create multiple files per day.
+- **Every chat with an agent is logged in the day's file** — each request gets a short
+  block recording its **core idea**, whatever the kind is:
+  - 🔧 **change request** — implement / refactor / restructure something
+  - ❓ **info gathering** — a question (including ones answered without changing files)
+  - ⚖️ **decision** — a rule, direction, or constraint set by the human
+  - 🎓 **learning** — something the human actually learned or discovered
+  - 🔴 **blocked / failed attempt** — recorded honestly
+- Blocks are added chronologically; each starts with a number and a title.
+- The day's file is a **running log**: append the next block whenever a chat happens.
+  Files are consolidated only when the human asks.
+
+### Block template (short blocks are fine — 3–6 lines each)
 
 ```markdown
-# YYYY-MM-DD — short title
+## N. short-title `kind`
 
-## Status
-🟢 / 🟡 / 🔴  + one-line summary
+**Core idea:** one or two lines on what was asked.
 
-## Context
-What prompted this work or decision?
-
-## What happened / Decisions made
-- ...
-
-## What I'm learning (learning journey)
-- New concepts, discoveries, "aha" moments, things that clicked...
-
-## Problems faced & how I solved them
-- Struggles, debugging stories, mistakes and their fixes...
-
-## Blockers / Open questions
-- ...
-
-## Next steps
-- ...
+**Done:** what actually happened (who did what).
+**Who:** ...
+**Status:** 🟢 / 🟡 / 🔴
 ```
+
+### When a day deserves more detail
+
+- A bigger change can have a few more bullets in its block.
+- The day file is the history; `notes/`, `README.md`, and `CHEATSHEET.md` carry the detail.
 
 ## Tips
 
-- Write short, honest entries — 5–20 lines is usually plenty.
-- **Honesty over polish, always.** If an agent did the work, say so. Never claim you learned
-  something you didn't — a fabricated learning journal is worthless. Entries are *your*
-  account; agents should not write in your voice unless you ask them to.
-- This is a **learning journal first**: if you learned something (even by failing), write it down.
-  🔴 "I tried X, it failed because Y" entries are gold, not shame.
-- Reference files, commits, or PRs where useful (`PR #1`, `docker-compose.yml`).
-- If a `TECHNOLOGIES.md` or `CHEATSHEET.md` decision changes, note it here too.
-- AI agents working here must add an entry when they make a non-trivial change.
+- Write short, honest entries — a block can be 3–6 lines.
+- **Honesty over polish, always.** If an agent did the work, say so. Never claim you
+  learned something you didn't. The devlog is *your* account; agents must not write in
+  your voice or attribute anything to you that you didn't express.
+- It is a **learning journal first**: write down what you actually learn and struggle
+  with — 🔴 "I tried X, it failed because Y" entries are gold.
+- Agents working here must add a block to that day's file for the chat they are handling
+  (that's the rule), stating plainly who did what.
 
-## Entries
+## Days
 
-- [2026-09-27-project-init.md](2026-09-27-project-init.md) — Project kickoff & scaffolding.
-- [2026-09-27-phase1-earthquake-pipeline.md](2026-09-27-phase1-earthquake-pipeline.md) — Phase 1: full pipeline working.
-- [2026-09-27-cheatsheet-learning-journey.md](2026-09-27-cheatsheet-learning-journey.md) — Cheat sheet + learning-log rules.
+- [2026-09-27.md](2026-09-27.md) — project kickoff, Phase 1 build, rule changes,
+  containerization, docs restructure (11 chat entries).

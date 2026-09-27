@@ -40,14 +40,15 @@ These rules apply to **everyone working in this repository**: humans and AI agen
 - Keep commits small, focused, and frequent.
 - Commit message style: short imperative summary, e.g. `Add docker-compose for postgres`,
   `Fix retry logic in ingestion script`.
-- Update the devlog entry on any non-trivial change (new milestone, tool change, blocked work).
+- Log every request and non-trivial change in the day's devlog file (core idea + kind — see §6).
 
 ## 6. Devlog & documentation discipline
 
-- The `devlog/` folder documents the **why** — decisions, milestones, blockers — and is also a
-  **learning journal**: what the human is learning, discovering, and struggling with, as they go.
-  New milestone, decision, or notable learning → new dated entry (`YYYY-MM-DD-slug.md`)
-  following `devlog/README.md`.
+- The `devlog/` folder documents the **why** and is the human's **learning journal**.
+  **One file per day** (`YYYY-MM-DD.md`): every chat with an agent is appended to that
+  day's file as a block with the request's **core idea** and its kind — change request,
+  info gathering, decision, learning, or blocker (same rule for humans and agents).
+  Format details in `devlog/README.md`.
 - Be honest, including about failures and blockers (🔴 entries are valuable, not shameful).
 - **Never fabricate the human's learning journey.** The devlog is the human's own account:
   agents never claim that the human learned, discovered, or struggled with something they
@@ -64,6 +65,8 @@ These rules apply to **everyone working in this repository**: humans and AI agen
 - **Never run `git commit` or `git push`** — version control is the human's job, always.
 - **Never write devlog content in the human's voice** or attribute learnings/experiences to
   the human that they did not express. Keep "who did what" strictly factual.
+- **Log every request you handle** in that day's devlog file (core idea + kind — change
+  request, info gathering, decision, …) as part of finishing the task.
 - Keep `CHEATSHEET.md` and the devlog current while working; surface learning moments
   (new discoveries, solved problems) for the human to capture.
 - **Never edit files without confirming the current state first** (read before write).
