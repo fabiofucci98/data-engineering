@@ -12,7 +12,7 @@ These rules apply to **everyone working in this repository**: humans and AI agen
 ## 2. Code and structure
 
 - **Python 3.11+** is the language end to end.
-- Upcoming layout (follow it once Phase 1 starts):
+- Layout (in use since Phase 1):
   - `docker-compose.yml` at the repo root.
   - Application code under `app/`.
   - Raw/processed data references under `data/` (never commit large payloads).
@@ -41,15 +41,27 @@ These rules apply to **everyone working in this repository**: humans and AI agen
   `Fix retry logic in ingestion script`.
 - Update the devlog entry on any non-trivial change (new milestone, tool change, blocked work).
 
-## 6. Devlog discipline
+## 6. Devlog & documentation discipline
 
-- The `devlog/` folder documents the *why*. New milestone or decision → new dated entry
-  (`YYYY-MM-DD-slug.md`) following `devlog/README.md`.
+- The `devlog/` folder documents the **why** — decisions, milestones, blockers — and is also a
+  **learning journal**: what the human is learning, discovering, and struggling with, as they go.
+  New milestone, decision, or notable learning → new dated entry (`YYYY-MM-DD-slug.md`)
+  following `devlog/README.md`.
 - Be honest, including about failures and blockers (🔴 entries are valuable, not shameful).
+- **Never fabricate the human's learning journey.** The devlog is the human's own account:
+  agents never claim that the human learned, discovered, or struggled with something they
+  didn't express. When an agent writes an entry, it must state plainly who did what.
+- **Keep `CHEATSHEET.md` (repo root) up to date**: any command, flag, or syntax snippet that
+  proves useful — or a gotcha that cost time — belongs there so it is never relearned.
+  A stage that introduces new tooling should update it in the same change.
 
 ## 7. Agent-specific behavior
 
 - **Never run `git commit` or `git push`** — version control is the human's job, always.
+- **Never write devlog content in the human's voice** or attribute learnings/experiences to
+  the human that they did not express. Keep "who did what" strictly factual.
+- Keep `CHEATSHEET.md` and the devlog current while working; surface learning moments
+  (new discoveries, solved problems) for the human to capture.
 - **Never edit files without confirming the current state first** (read before write).
 - Verify changes after making them (e.g., run the code, re-read the edited file).
 - If a task is ambiguous, ask a clarifying question instead of guessing.

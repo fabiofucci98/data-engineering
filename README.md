@@ -116,6 +116,7 @@ Open http://localhost:8501 — filter by magnitude and date in the sidebar.
 ScientificDataPlatform/
 ├── README.md               ← this file
 ├── TECHNOLOGIES.md         ← tech stack per stage (the "plan")
+├── CHEATSHEET.md           ← command/syntax reference (keep fresh!)
 ├── devlog/                 ← chronological project journal
 ├── .cline/rules/           ← rules loaded by Cline / agents working here
 ├── docker-compose.yml      ← Postgres 16 + pgAdmin 4 (Phase 1)
