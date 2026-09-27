@@ -118,6 +118,7 @@ ScientificDataPlatform/
 - **Language:** Python (end to end — ingestion → storage glue → visualization)
 - **Storage:** PostgreSQL via Docker Compose
 - **Visualization:** Streamlit (simple, beginner-friendly)
+- **AI assistance (dev workflow):** OpenRouter as the LLM provider
 - **Current stack details:** see [`TECHNOLOGIES.md`](TECHNOLOGIES.md)
 
 ## 📓 Devlog

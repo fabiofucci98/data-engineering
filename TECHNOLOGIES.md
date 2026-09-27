@@ -18,6 +18,10 @@ It is not a roadmap: future tools are added here only when they are actually ado
 | Docker + Docker Compose | Docker Engine 29.x, Compose v5 | Runs the whole platform — `db`, `pgadmin`, `app` services (`docker compose up -d`) |
 | Git + GitHub | — | Version control — humans commit/push; agents never |
 | VS Code | — | Editor used for this repo |
+| OpenRouter | — | LLM provider for AI-assisted development (e.g., Cline) in this environment |
+
+> Note: the dev-tooling rows here (VS Code, OpenRouter) describe how this repo is built
+> and edited — they are not part of the running pipeline.
 
 ## Data storage
 
