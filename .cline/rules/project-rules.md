@@ -59,6 +59,8 @@ These rules apply to **everyone working in this repository**: humans and AI agen
 - The **README describes the current state only**: anything not yet implemented belongs in
   `notes/` (the thinking space for the future). When an idea becomes real, move it from
   `notes/` into the README and mark the note accordingly.
+- **`WORKFLOW.md` (repo root) is the portable template** of these conventions: when a rule
+  or doc convention changes, update it in the same change so it stays paste-able.
 
 ## 7. Agent-specific behavior
 

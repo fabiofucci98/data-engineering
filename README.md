@@ -97,6 +97,7 @@ ScientificDataPlatform/
 ├── README.md               ← this file
 ├── TECHNOLOGIES.md         ← technologies currently in use
 ├── CHEATSHEET.md           ← command/syntax reference (keep fresh!)
+├── WORKFLOW.md             ← portable template: recreate this workflow elsewhere
 ├── devlog/                 ← chronological project journal
 ├── notes/                  ← future plans & ideas (not yet implemented)
 ├── .cline/rules/           ← rules loaded by Cline / agents working here
