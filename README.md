@@ -127,6 +127,3 @@ The project's evolution is journaled in [`devlog/`](devlog/README.md). Every mea
 decision, blocker, and pivot gets a dated entry — this keeps the *why* behind the project alive.
 
 ## 🤝 Contributing / Working Here
-
-Anyone (human or AI agent) working in this repo must follow the conventions in
-[`.cline/rules/project-rules.md`](.cline/rules/project-rules.md).
