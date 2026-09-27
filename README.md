@@ -88,12 +88,12 @@ Open http://localhost:8501 — filter by magnitude and date in the sidebar.
 
 ## 🗺️ Roadmap
 
-- [ ] **Phase 0 — Scaffolding** *(current)*
+- [x] **Phase 0 — Scaffolding** *(current)*
   - [x] README (this file)
   - [x] `TECHNOLOGIES.md` — technology plan by stage
   - [x] `devlog/` — development log with first entry
   - [x] `.cline/rules/` — agent / contributor working rules
-  - [ ] Git repository initialization + first commit
+  - [x] Git repository initialization + first commit
 - [x] **Phase 1 — Earthquake MVP** *(working locally)*
   - [x] `docker-compose.yml` (Postgres + pgAdmin)
   - [x] `app/` ingestion script hitting the USGS API
