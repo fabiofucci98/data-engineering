@@ -33,6 +33,9 @@ These rules apply to **everyone working in this repository**: humans and AI agen
 
 ## 5. Version control
 
+- **Agents must NEVER run `git commit` or `git push`.** Version control belongs to the human:
+  agents prepare and verify changes, then hand them over for the human to stage, review,
+  commit, and push.
 - Keep commits small, focused, and frequent.
 - Commit message style: short imperative summary, e.g. `Add docker-compose for postgres`,
   `Fix retry logic in ingestion script`.
@@ -46,6 +49,7 @@ These rules apply to **everyone working in this repository**: humans and AI agen
 
 ## 7. Agent-specific behavior
 
+- **Never run `git commit` or `git push`** — version control is the human's job, always.
 - **Never edit files without confirming the current state first** (read before write).
 - Verify changes after making them (e.g., run the code, re-read the edited file).
 - If a task is ambiguous, ask a clarifying question instead of guessing.
