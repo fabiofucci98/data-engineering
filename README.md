@@ -2,9 +2,9 @@
 
 > **🚧 WORK IN PROGRESS — EVOLVING PROJECT**
 >
-> **Phase 1 (earthquake MVP) is working locally:** Postgres + pgAdmin run in Docker,
-> `app/ingest.py` loads USGS Earthquake data into Postgres, and `app/dashboard.py`
-> visualizes it with Streamlit. Later phases expand to other scientific data sources
+> **Phase 1 (earthquake MVP) is working locally, all in Docker:** Postgres + pgAdmin +
+> the Python app (`app/ingest.py` loads USGS Earthquake data, `app/dashboard.py`
+> visualizes it with Streamlit). Later phases expand to other scientific data sources
 > and culminate in an ML project (see the roadmap below).
 
 ---
@@ -34,57 +34,68 @@ Every decision made today — tech choices, schema design, folder layout — kee
 ## 🧱 Architecture (current vision)
 
 ```
-┌────────────┐    ┌─────────────────┐    ┌──────────────┐    ┌──────────────┐
-│  Public    │──▶│  Ingestion       │──▶│  PostgreSQL  │──▶│  Simple      │
-│  Data APIs │    │  (Python,       │    │  (Docker)    │    │  Visualization│
-│  (USGS...) │    │  scheduled)     │    │              │    │  (Streamlit) │
-└────────────┘    └─────────────────┘    └──────────────┘    └──────────────┘
+┌────────────┐   ┌─────────────────┐   ┌──────────────┐    ┌────────────────┐
+│  Public     ──▶ Ingestion        ──▶ PostgreSQL     ──▶  Simple          
+│  Data APIs │   │  (Python,       │   │  (Docker)    │    │  Visualization │
+│  (USGS...) │   │  scheduled)     │   │              │    │  (Streamlit)   │
+└────────────┘   └─────────────────┘   └──────────────┘    └────────────────┘
 ```
 
-This is now real: see `docker-compose.yml` and the `app/` folder. The diagram will be
-refined as later phases (multi-source, ML) land.
+All three boxes now run under Docker Compose (`db`, `pgadmin`, `app`). The diagram will
+be refined as later phases (multi-source, ML) land.
 
 ## 🚀 Getting Started (Phase 1)
 
 ### Prerequisites
-- Docker Desktop (with Compose)
-- Python 3.11+ (tested on 3.13)
 
-### 1. Start the database stack
+- Docker Desktop (with Compose)
+
+### 1. Start the whole stack (db + pgAdmin + app)
 
 ```bash
-docker compose up -d
+docker compose up -d --build
 ```
 
 - Postgres → `localhost:5433` (a machine-local Postgres already owns 5432)
 - pgAdmin → http://localhost:8080 (login `admin@example.com` / `admin`)
-- In pgAdmin, register a server with host `db` and port `5432` (inside the Docker network, user `postgres`).
+- Dashboard → http://localhost:8501
+- In pgAdmin, register a server with host `db` and port `5432` (inside the Docker
+  network, user `postgres`).
 
-### 2. Install Python dependencies
+The `app` service waits for Postgres to be healthy, and `--build` rebuilds the image
+when the Python code changes.
 
-```bash
-python -m venv .venv
-.venv\Scripts\activate           # Windows
-source .venv/bin/activate        # macOS / Linux
-pip install -r app/requirements.txt
-```
-
-### 3. Load earthquake data
+### 2. Load earthquake data (inside the app container)
 
 ```bash
-python app/ingest.py                                     # last 30 days, min magnitude 2.5
-python app/ingest.py --starttime 2026-01-01 --endtime 2026-03-01 --min-magnitude 4.0
+docker compose run --rm app python ingest.py                                     # last 30 days, min magnitude 2.5
+docker compose run --rm app python ingest.py --starttime 2026-01-01 --endtime 2026-03-01 --min-magnitude 4.0
 ```
 
 Re-running is safe: ingestion upserts keyed on the USGS event id, so rows are never duplicated.
 
-### 4. View the dashboard
+### 3. Restart / inspect the dashboard container
 
 ```bash
-streamlit run app/dashboard.py
+docker compose up -d app        # start just the dashboard container
+docker compose logs -f app      # follow its logs
 ```
 
 Open http://localhost:8501 — filter by magnitude and date in the sidebar.
+
+### (Optional) Running the app directly on the host
+
+For learning, you can also run it without Docker:
+
+```bash
+python -m venv .venv
+pip install -r app/requirements.txt        # after activating the venv (see CHEATSHEET.md)
+python app/ingest.py
+streamlit run app/dashboard.py
+```
+
+When run on the host, the app reads `.env` (`POSTGRES_HOST=localhost`, `POSTGRES_PORT=5433`)
+to reach the same Docker Postgres.
 
 ## 🗺️ Roadmap
 
@@ -119,11 +130,13 @@ ScientificDataPlatform/
 ├── CHEATSHEET.md           ← command/syntax reference (keep fresh!)
 ├── devlog/                 ← chronological project journal
 ├── .cline/rules/           ← rules loaded by Cline / agents working here
-├── docker-compose.yml      ← Postgres 16 + pgAdmin 4 (Phase 1)
+├── docker-compose.yml      ← Postgres 16 + pgAdmin 4 + app (Docker)
 ├── .env.example            ← env template; copy to .env (git-ignored)
 ├── sql/
 │   └── schema.sql          ← auto-applied on the first `docker compose up`
 ├── app/
+│   ├── Dockerfile          ← container image for ingest + dashboard
+│   ├── .dockerignore
 │   ├── ingest.py           ← USGS API → Postgres (idempotent upsert)
 │   ├── dashboard.py        ← Streamlit dashboard
 │   └── requirements.txt    ← pinned Python dependencies
