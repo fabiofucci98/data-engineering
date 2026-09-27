@@ -21,7 +21,7 @@ These rules apply to **everyone working in this repository**: humans and AI agen
 
 ## 3. Don't break the learning path
 
-- Favor the **least complex tool that fits** (Per README/TECHNOLOGIES.md plan). Don't introduce
+- Favor the **least complex tool that fits**. Don't introduce
   Airflow, dbt, or ML frameworks before the MVP exists — their time comes later.
 - When a stage advances, **update `TECHNOLOGIES.md`** to reflect reality.
 

@@ -1,108 +1,55 @@
-# Technologies by Stage
+# Technologies in Use
 
-This is the **technology plan** for the Scientific Data Platform. It documents *what* we use,
-*why* we use it, and *what the alternatives* are — for each stage of the project's evolution.
+This document lists the technologies **currently in use** in this repository.
+It is not a roadmap: future tools are added here only when they are actually adopted.
 
-> **Guiding rules**
-> - Start simple; make the least complex choice that meets current needs.
-> - Prefer tools that scale gracefully into the later stages (multi-source, ML).
-> - Everything listed here is the *plan* — revisit it in the devlog when reality differs.
+> Last reviewed: 2026-09-27 (end of Phase 1, Python app containerized)
 
-## Current reality (as of Phase 1 — 2026-09-27)
+## Data source
 
-The MVP is working locally with a subset of the plan:
-
-| Item | Status |
+| Technology | Where / Why |
 |---|---|
-| Postgres 16 + pgAdmin 4 in Docker Compose | ✅ in use |
-| `requests` + `psycopg` v3 + SQLAlchemy (ingest/reads) | ✅ in use |
-| Streamlit with native charts (`st.map`, `st.bar_chart`, `st.dataframe`) | ✅ in use |
-| `pandas` for query results in the dashboard | ✅ in use |
-| Python app containerized (`app` service + `app/Dockerfile`) | ✅ in use |
-| Scheduling (cron / Prefect / Airflow) | ⏳ still manual on-demand runs |
-| dbt / Great Expectations | ⏳ not yet — Stage 3 |
+| USGS Earthquakes API (FDSN Event Service) | `app/ingest.py` fetches `format=geojson` events; no API key required |
 
-The tables below remain the roadmap; anything marked ✅ is what the code uses today.
+## Infrastructure
 
----
-
-## Stage 0 — Foundations
-
-| Tool | Why | Alternatives |
+| Technology | Version | Where / Why |
 |---|---|---|
-| **Git + GitHub** | Version control; collaborate; safe experimentation | GitLab, Gitea |
-| **VS Code** | Lightweight editor with Python/Docker integration | PyCharm, Jupyter |
-| **Docker + Docker Compose** | Zero-friction local Postgres; reproducible environment | Podman, bare-metal install |
-| **Python 3.11+** | Best ecosystem for data + ML; readable for beginners | R (weaker ML/tooling path) |
-| **Virtual environment (`venv`)** | Isolate Python deps per project | `uv`, Poetry, `conda` |
+| Docker + Docker Compose | Docker Engine 29.x, Compose v5 | Runs the whole platform — `db`, `pgadmin`, `app` services (`docker compose up -d`) |
+| Git + GitHub | — | Version control — humans commit/push; agents never |
+| VS Code | — | Editor used for this repo |
 
-## Stage 1 — Ingestion (Earthquake MVP)
+## Data storage
 
-| Tool | Why | Alternatives |
+| Technology | Version | Where / Why |
 |---|---|---|
-| **USGS Earthquakes API** | Free, well-documented, no auth required — ideal first source | — |
-| **Python `requests`** | Simple HTTP → GeoJSON | `httpx`, `urllib` |
-| **`pandas`** | Normalize JSON into tabular form; easy data inspection | `polars` (faster, later) |
-| **Plain scripts + cron** (or Windows Task Scheduler) | Simplest scheduling for the MVP | Prefect, Airflow (Stage 2) |
+| PostgreSQL | `postgres:16-alpine` | `db` service; `sql/schema.sql` auto-applied on first boot; published on host port 5433 |
+| pgAdmin 4 | `dpage/pgadmin4:latest` | `pgadmin` service; web UI at http://localhost:8080 |
 
-## Stage 2 — Storage & Scheduling
+## Python application (`app` service)
 
-| Tool | Why | Alternatives |
+| Technology | Version | Where / Why |
 |---|---|---|
-| **PostgreSQL** (Docker container) | Robust, SQL standard, great for geospatial (PostGIS) later | MySQL, DuckDB (file-based, for local analysis) |
-| **pgAdmin** | GUI to inspect tables/queries while learning | DBeaver, psql CLI |
-| **Prefect / Airflow** | Production-grade scheduling, retries, observability | cron, Dagster (Stage 1 if needs grow early) |
+| Python | `python:3.13-slim` | Language end to end (ingest + dashboard) |
+| `requests` | 2.32.3 | USGS API calls |
+| `psycopg` (v3) | 3.2.3 | Postgres driver in `ingest.py`; SQLAlchemy dials it via `postgresql+psycopg://` |
+| `SQLAlchemy` | 2.0.36 | Engine used by the dashboard to query Postgres |
+| `pandas` | 2.2.3 | Query results → DataFrames for charting |
+| `Streamlit` | 1.40.0 | Dashboard (`st.map`, `st.bar_chart`, `st.dataframe`, `st.metric`) |
+| `python-dotenv` | 1.0.1 | Loads `.env` configuration |
 
-## Stage 3 — Transformation & Data Quality
+## How the services connect
 
-| Tool | Why | Alternatives |
-|---|---|---|
-| **SQL** | The language of Postgres; transformations close to data | — |
-| **`pandas` / `polars`** | Clean/normalize before loading | — |
-| **dbt (later)** | Versioned, testable SQL-based transformations | Plain SQL scripts (fine at MVP) |
-| **Validation** (e.g., `great_expectations`) | Assert data quality as volume grows | Hand-rolled checks (fine at MVP) |
+- Inside Docker: `app` → `db` via hostname `db`, port `5432` (container-internal).
+- From the host: Postgres at `localhost:5433`, dashboard at `localhost:8501`, pgAdmin at `localhost:8080`.
 
-## Stage 4 — Visualization
+## Version pinning
 
-| Tool | Why | Alternatives |
-|---|---|---|
-| **Streamlit** | Fast Python-native dashboards; maps/charts in minutes | Dash, Panel |
-| **Matplotlib / Plotly** | Charting inside Streamlit or notebooks | Seaborn, Altair |
-| **Grafana** (later) | Operational dashboards on live Postgres | Metabase, Superset |
-| **Jupyter notebooks** | Exploratory analysis while learning | VS Code notebooks |
+- Python dependencies: pinned in `app/requirements.txt`.
+- Images: pinned in `docker-compose.yml` (`postgres:16-alpine`) and `app/Dockerfile`
+  (`python:3.13-slim`); pgAdmin tracks `latest`.
 
-## Stage 5 — Expanding Beyond Earthquakes (Multi-Source)
+## Policy
 
-| Source / Tool | Why |
-|---|---|
-| **NOAA climate data** | Complementary earth-science signal |
-| **NASA open datasets** | Geospatial + remote-sensing data |
-| **Other USGS feeds** (e.g., volcanoes, water) | Consistent API style with earthquakes |
-| **Structured schema design** | One normalized model that fits *many* sources, not one bespoke table |
-| **Object storage (S3 / MinIO)** (later) | Archive raw payloads cheaply before transformation |
-
-## Stage 6 — Destination: Machine Learning
-
-| Tool | Why | Alternatives |
-|---|---|---|
-| **pandas / polars** | Feature engineering on accumulated data | — |
-| **scikit-learn** | Beginner-friendly classical ML (regression/classification) | XGBoost (later) |
-| **Jupyter / VS Code notebooks** | Experimentation and documentation | — |
-| **MLflow** (later) | Experiment tracking + model registry | Weights & Biases |
-| **PostGIS** (if timeframe/geospatial features become features) | Nearest-neighbor, distance features in SQL | shapely / geopandas |
-
----
-
-## Evolution summary
-
-```
-Foundations → USGS-only MVP → Hardened pipelines → Multi-source scientific data → ML project
-     ↓              ↓                 ↓                      ↓                      ↓
-  Git/Docker    requests/pandas    Prefect/dbt          NOAA/NASA/feeds        scikit-learn/MLflow
-  /Python       /Postgres          /Postgres            + design pattern       + feature store
-```
-
-## Decision log
-
-Major tech decisions and their rationale get recorded in the [devlog](devlog/README.md),
-so the reasoning in this document stays traceable over time.
+- Future tools (schedulers such as cron / Prefect / Airflow, dbt, ML frameworks, additional
+  data sources) do **not** belong in this document until they are part of the codebase.

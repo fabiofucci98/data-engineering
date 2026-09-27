@@ -101,7 +101,7 @@ to reach the same Docker Postgres.
 
 - [x] **Phase 0 — Scaffolding** *(current)*
   - [x] README (this file)
-  - [x] `TECHNOLOGIES.md` — technology plan by stage
+  - [x] `TECHNOLOGIES.md` — technologies in use
   - [x] `devlog/` — development log with first entry
   - [x] `.cline/rules/` — agent / contributor working rules
   - [x] Git repository initialization + first commit
@@ -126,7 +126,7 @@ to reach the same Docker Postgres.
 ```
 ScientificDataPlatform/
 ├── README.md               ← this file
-├── TECHNOLOGIES.md         ← tech stack per stage (the "plan")
+├── TECHNOLOGIES.md         ← technologies currently in use
 ├── CHEATSHEET.md           ← command/syntax reference (keep fresh!)
 ├── devlog/                 ← chronological project journal
 ├── .cline/rules/           ← rules loaded by Cline / agents working here
@@ -145,10 +145,10 @@ ScientificDataPlatform/
 
 ## 🧰 Tech Stack — TL;DR
 
-- **Language:** Python (end to end — ingestion → storage glue → visualization → future ML)
+- **Language:** Python (end to end — ingestion → storage glue → visualization)
 - **Storage:** PostgreSQL via Docker Compose
-- **Visualization:** Streamlit (simple, beginner-friendly; alternatives listed in the tech plan)
-- **Full breakdown by stage:** see [`TECHNOLOGIES.md`](TECHNOLOGIES.md)
+- **Visualization:** Streamlit (simple, beginner-friendly)
+- **Current stack details:** see [`TECHNOLOGIES.md`](TECHNOLOGIES.md)
 
 ## 📓 Devlog
 
