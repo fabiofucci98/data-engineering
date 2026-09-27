@@ -1,9 +1,11 @@
 # Scientific Data Platform
 
-> **🚧 WORK IN PROGRESS — NOT YET FUNCTIONAL**
-
-This repository currently contains *project scaffolding only* (documentation, devlog, and agent rules).
-No code, containers, or data pipelines exist yet — they are the very next steps on the roadmap below.
+> **🚧 WORK IN PROGRESS — EVOLVING PROJECT**
+>
+> **Phase 1 (earthquake MVP) is working locally:** Postgres + pgAdmin run in Docker,
+> `app/ingest.py` loads USGS Earthquake data into Postgres, and `app/dashboard.py`
+> visualizes it with Streamlit. Later phases expand to other scientific data sources
+> and culminate in an ML project (see the roadmap below).
 
 ---
 
@@ -39,7 +41,50 @@ Every decision made today — tech choices, schema design, folder layout — kee
 └────────────┘    └─────────────────┘    └──────────────┘    └──────────────┘
 ```
 
-This diagram will be refined and turned into real `docker-compose.yml` + `app/` code in Phase 1.
+This is now real: see `docker-compose.yml` and the `app/` folder. The diagram will be
+refined as later phases (multi-source, ML) land.
+
+## 🚀 Getting Started (Phase 1)
+
+### Prerequisites
+- Docker Desktop (with Compose)
+- Python 3.11+ (tested on 3.13)
+
+### 1. Start the database stack
+
+```bash
+docker compose up -d
+```
+
+- Postgres → `localhost:5433` (a machine-local Postgres already owns 5432)
+- pgAdmin → http://localhost:8080 (login `admin@example.com` / `admin`)
+- In pgAdmin, register a server with host `db` and port `5432` (inside the Docker network, user `postgres`).
+
+### 2. Install Python dependencies
+
+```bash
+python -m venv .venv
+.venv\Scripts\activate           # Windows
+source .venv/bin/activate        # macOS / Linux
+pip install -r app/requirements.txt
+```
+
+### 3. Load earthquake data
+
+```bash
+python app/ingest.py                                     # last 30 days, min magnitude 2.5
+python app/ingest.py --starttime 2026-01-01 --endtime 2026-03-01 --min-magnitude 4.0
+```
+
+Re-running is safe: ingestion upserts keyed on the USGS event id, so rows are never duplicated.
+
+### 4. View the dashboard
+
+```bash
+streamlit run app/dashboard.py
+```
+
+Open http://localhost:8501 — filter by magnitude and date in the sidebar.
 
 ## 🗺️ Roadmap
 
@@ -49,11 +94,11 @@ This diagram will be refined and turned into real `docker-compose.yml` + `app/` 
   - [x] `devlog/` — development log with first entry
   - [x] `.cline/rules/` — agent / contributor working rules
   - [ ] Git repository initialization + first commit
-- [ ] **Phase 1 — Earthquake MVP**
-  - [ ] `docker-compose.yml` (Postgres + pgAdmin)
-  - [ ] `app/` ingestion script hitting the USGS API
-  - [ ] Schema + load into Postgres
-  - [ ] Simple Streamlit dashboard with maps/charts
+- [x] **Phase 1 — Earthquake MVP** *(working locally)*
+  - [x] `docker-compose.yml` (Postgres + pgAdmin)
+  - [x] `app/` ingestion script hitting the USGS API
+  - [x] Schema + load into Postgres
+  - [x] Simple Streamlit dashboard with maps/charts
 - [ ] **Phase 2 — Hardening**
   - [ ] Scheduling (cron / Prefect / Airflow)
   - [ ] Retries, backoff, idempotent loads
@@ -73,9 +118,15 @@ ScientificDataPlatform/
 ├── TECHNOLOGIES.md         ← tech stack per stage (the "plan")
 ├── devlog/                 ← chronological project journal
 ├── .cline/rules/           ← rules loaded by Cline / agents working here
-├── docker-compose.yml      ← [Phase 1]
-├── app/                    ← [Phase 1] ingestion + visualization code
-└── data/                   ← [Phase 1+] raw / processed data notes
+├── docker-compose.yml      ← Postgres 16 + pgAdmin 4 (Phase 1)
+├── .env.example            ← env template; copy to .env (git-ignored)
+├── sql/
+│   └── schema.sql          ← auto-applied on the first `docker compose up`
+├── app/
+│   ├── ingest.py           ← USGS API → Postgres (idempotent upsert)
+│   ├── dashboard.py        ← Streamlit dashboard
+│   └── requirements.txt    ← pinned Python dependencies
+└── data/                   ← raw / processed data notes (never commit payloads)
 ```
 
 ## 🧰 Tech Stack — TL;DR

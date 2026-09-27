@@ -1,0 +1,7 @@
+# -- Phase 1 — pinned, tested versions (Python 3.11+ / 3.13 on Windows)
+requests==2.32.3
+python-dotenv==1.0.1
+psycopg[binary]==3.2.3
+SQLAlchemy==2.0.36
+pandas==2.2.3
+streamlit==1.40.0

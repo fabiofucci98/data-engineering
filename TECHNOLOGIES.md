@@ -8,6 +8,21 @@ This is the **technology plan** for the Scientific Data Platform. It documents *
 > - Prefer tools that scale gracefully into the later stages (multi-source, ML).
 > - Everything listed here is the *plan* — revisit it in the devlog when reality differs.
 
+## Current reality (as of Phase 1 — 2026-09-27)
+
+The MVP is working locally with a subset of the plan:
+
+| Item | Status |
+|---|---|
+| Postgres 16 + pgAdmin 4 in Docker Compose | ✅ in use |
+| `requests` + `psycopg` v3 + SQLAlchemy (ingest/reads) | ✅ in use |
+| Streamlit with native charts (`st.map`, `st.bar_chart`, `st.dataframe`) | ✅ in use |
+| `pandas` for query results in the dashboard | ✅ in use |
+| Scheduling (cron / Prefect / Airflow) | ⏳ still manual on-demand runs |
+| dbt / Great Expectations | ⏳ not yet — Stage 3 |
+
+The tables below remain the roadmap; anything marked ✅ is what the code uses today.
+
 ---
 
 ## Stage 0 — Foundations
