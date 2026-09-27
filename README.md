@@ -4,45 +4,32 @@
 >
 > **Phase 1 (earthquake MVP) is working locally, all in Docker:** Postgres + pgAdmin +
 > the Python app (`app/ingest.py` loads USGS Earthquake data, `app/dashboard.py`
-> visualizes it with Streamlit). Later phases expand to other scientific data sources
-> and culminate in an ML project (see the roadmap below).
+> visualizes it with Streamlit). Future plans and ideas live in [`notes/`](notes/README.md).
 
 ---
 
 ## What is this?
 
-A **beginner-level data engineering project** that starts with a single goal:
+A **beginner-level data engineering project** — currently a single pipeline:
 
 > Ingest **USGS Earthquake data** from a public API → store it in **PostgreSQL** running in **Docker** → present it with **simple visualizations**.
 
-But that is only the *starting point*.
+The project is designed as the foundation for something bigger (more scientific data
+sources later, an ML project further out); that future vision is kept in
+[`notes/`](notes/README.md), separate from this README, which only describes what works today.
 
-## 🎯 The Vision
-
-This project is explicitly designed to grow **far beyond** a simple one-source demo:
-
-| Phase | What happens | When |
-|---|---|---|
-| **0 — Scaffolding** | Repo foundation: README, tech plan, devlog, agent rules | Now |
-| **1 — Earthquake MVP** | Docker + Postgres + USGS API ingestion + a simple dashboard | Next |
-| **2 — Hardening** | Scheduled runs, error handling/retries, incremental loads, SQL transformations | Later |
-| **3 — Multi-source data** | Expand **beyond earthquakes** to other scientific/open data: NOAA, NASA, climate feeds, etc. | Future |
-| **4 — Machine Learning** | The project **culminates in an ML project** built on the accumulated scientific data | Destination |
-
-Every decision made today — tech choices, schema design, folder layout — keeps this evolution in mind, so the pipeline generalizes beyond a single dataset and beyond a single visualization.
-
-## 🧱 Architecture (current vision)
+## 🧱 Architecture (current state)
 
 ```
 ┌────────────┐   ┌─────────────────┐   ┌──────────────┐    ┌────────────────┐
 │  Public     ──▶ Ingestion        ──▶ PostgreSQL     ──▶  Simple          
 │  Data APIs │   │  (Python,       │   │  (Docker)    │    │  Visualization │
-│  (USGS...) │   │  scheduled)     │   │              │    │  (Streamlit)   │
+│  (USGS...) │   │  manual)       │   │              │    │  (Streamlit)   │
 └────────────┘   └─────────────────┘   └──────────────┘    └────────────────┘
 ```
 
-All three boxes now run under Docker Compose (`db`, `pgadmin`, `app`). The diagram will
-be refined as later phases (multi-source, ML) land.
+All three boxes run under Docker Compose (`db`, `pgadmin`, `app`). Ingestion is run
+manually today (`docker compose run --rm app python ingest.py`).
 
 ## 🚀 Getting Started (Phase 1)
 
@@ -97,29 +84,11 @@ streamlit run app/dashboard.py
 When run on the host, the app reads `.env` (`POSTGRES_HOST=localhost`, `POSTGRES_PORT=5433`)
 to reach the same Docker Postgres.
 
-## 🗺️ Roadmap
+## 🧭 Current state vs. future
 
-- [x] **Phase 0 — Scaffolding** *(current)*
-  - [x] README (this file)
-  - [x] `TECHNOLOGIES.md` — technologies in use
-  - [x] `devlog/` — development log with first entry
-  - [x] `.cline/rules/` — agent / contributor working rules
-  - [x] Git repository initialization + first commit
-- [x] **Phase 1 — Earthquake MVP** *(working locally)*
-  - [x] `docker-compose.yml` (Postgres + pgAdmin)
-  - [x] `app/` ingestion script hitting the USGS API
-  - [x] Schema + load into Postgres
-  - [x] Simple Streamlit dashboard with maps/charts
-- [ ] **Phase 2 — Hardening**
-  - [ ] Scheduling (cron / Prefect / Airflow)
-  - [ ] Retries, backoff, idempotent loads
-  - [ ] SQL transformations / analytics-ready tables
-- [ ] **Phase 3 — More scientific data sources**
-  - [ ] NOAA / NASA / climate datasets
-  - [ ] Multi-source schema federation
-- [ ] **Phase 4 — Machine Learning**
-  - [ ] Feature store on accumulated data
-  - [ ] First ML experiments (e.g., classification/regression on events)
+- **Implemented (this README):** Phase 0 (scaffolding) and Phase 1 (earthquake MVP).
+- **Not yet implemented:** future thoughts — upcoming phases (hardening, multi-source
+  data, ML) are planned in [`notes/vision-and-roadmap.md`](notes/vision-and-roadmap.md).
 
 ## 📚 Repository Layout
 
@@ -129,6 +98,7 @@ ScientificDataPlatform/
 ├── TECHNOLOGIES.md         ← technologies currently in use
 ├── CHEATSHEET.md           ← command/syntax reference (keep fresh!)
 ├── devlog/                 ← chronological project journal
+├── notes/                  ← future plans & ideas (not yet implemented)
 ├── .cline/rules/           ← rules loaded by Cline / agents working here
 ├── docker-compose.yml      ← Postgres 16 + pgAdmin 4 + app (Docker)
 ├── .env.example            ← env template; copy to .env (git-ignored)

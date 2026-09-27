@@ -16,6 +16,7 @@ These rules apply to **everyone working in this repository**: humans and AI agen
   - `docker-compose.yml` at the repo root.
   - Application code under `app/`.
   - Raw/processed data references under `data/` (never commit large payloads).
+  - Future plans and ideas live under `notes/` — never in the README.
 - Keep code **simple and readable** — this is a learning project first, a platform second.
 - Use `venv` + `requirements.txt` (or equivalent) for dependency pinning.
 
@@ -54,6 +55,9 @@ These rules apply to **everyone working in this repository**: humans and AI agen
 - **Keep `CHEATSHEET.md` (repo root) up to date**: any command, flag, or syntax snippet that
   proves useful — or a gotcha that cost time — belongs there so it is never relearned.
   A stage that introduces new tooling should update it in the same change.
+- The **README describes the current state only**: anything not yet implemented belongs in
+  `notes/` (the thinking space for the future). When an idea becomes real, move it from
+  `notes/` into the README and mark the note accordingly.
 
 ## 7. Agent-specific behavior
 
