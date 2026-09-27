@@ -125,5 +125,3 @@ ScientificDataPlatform/
 
 The project's evolution is journaled in [`devlog/`](devlog/README.md). Every meaningful milestone,
 decision, blocker, and pivot gets a dated entry — this keeps the *why* behind the project alive.
-
-## 🤝 Contributing / Working Here
