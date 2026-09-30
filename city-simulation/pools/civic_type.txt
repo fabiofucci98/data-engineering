@@ -1,0 +1,12 @@
+Clock Tower
+Town Hall
+Guild Hall
+Opera House
+Observatory
+Museum
+Concert Hall
+Library
+Grand Hall
+Exchange
+Assembly
+Court

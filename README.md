@@ -2,17 +2,23 @@
 
 > **🚧 WORK IN PROGRESS — EVOLVING PROJECT**
 >
-> **Phase 1 (earthquake MVP) is working locally, all in Docker:** Postgres + pgAdmin +
-> the Python app (`app/ingest.py` loads USGS Earthquake data, `app/dashboard.py`
-> visualizes it with Streamlit). Future plans and ideas live in [`notes/`](notes/README.md).
+> **Phase 1 (earthquake MVP) and the simulated city generator are working locally, all
+> in Docker:** two self-contained pipelines, each with **its own Postgres and its own
+> compose file** — `scientific-data/` (USGS earthquakes app + dashboard) and
+> `city-simulation/` (city generator). Shared dev tooling (pgAdmin) lives in the root
+> compose. Future plans and ideas live in [`notes/`](notes/README.md).
 
 ---
 
 ## What is this?
 
-A **beginner-level data engineering project** — currently a single pipeline:
+A **beginner-level data engineering project** — co-existing pipelines, each with its own
+Postgres database and Docker Compose file:
 
-> Ingest **USGS Earthquake data** from a public API → store it in **PostgreSQL** running in **Docker** → present it with **simple visualizations**.
+> **Pipeline 1 — Earthquakes:** Ingest **USGS Earthquake data** from a public API →
+> store it in **PostgreSQL** (Docker) → present it with **simple visualizations**.
+> **Pipeline 2 — Simulated city:** a generator creates a fictional steam-punk city
+> (districts, roads, buildings) into its own Postgres.
 
 The project is designed as the foundation for something bigger (more scientific data
 sources later, an ML project further out); that future vision is kept in
@@ -20,75 +26,109 @@ sources later, an ML project further out); that future vision is kept in
 
 ## 🧱 Architecture (current state)
 
+Each pipeline owns **its own compose file and its own Postgres** — the databases stay
+physically separate. The root `docker-compose.yml` runs only shared tooling (pgAdmin)
+and creates the shared network `sdp-shared` that both stack databases join, so pgAdmin
+can reach them by service name (`sci-db`, `city-db`).
+
 ```
-┌────────────┐   ┌─────────────────┐   ┌──────────────┐    ┌────────────────┐
-│  Public     ──▶ Ingestion        ──▶ PostgreSQL     ──▶  Simple          
-│  Data APIs │   │  (Python,       │   │  (Docker)    │    │  Visualization │
-│  (USGS...) │   │  manual)       │   │              │    │  (Streamlit)   │
-└────────────┘   └─────────────────┘   └──────────────┘    └────────────────┘
+┌─ scientific-data/ ───────────────┐   ┌─ city-simulation/ ────────────────┐
+│ USGS API → ingest.py → Postgres  │   │ generate.py (formulas + pools)     │
+│            → Streamlit dashboard │   │            → Postgres               │
+│ compose: sci-db (:5433) + app    │   │ compose: city-db (:5434) + citygen  │
+└──────────────────────────────────┘   └────────────────────────────────────┘
+                 └────────────── root compose: pgAdmin + shared network ─────┘
 ```
 
-All three boxes run under Docker Compose (`db`, `pgadmin`, `app`). Ingestion is run
-manually today (`docker compose run --rm app python ingest.py`).
-
-## 🚀 Getting Started (Phase 1)
+## 🚀 Getting Started
 
 ### Prerequisites
 
 - Docker Desktop (with Compose)
 
-### 1. Start the whole stack (db + pgAdmin + app)
+### 1. Start the shared tooling (pgAdmin + shared network)
 
 ```bash
-docker compose up -d --build
+docker compose up -d
 ```
 
-- Postgres → `localhost:5433` (a machine-local Postgres already owns 5432)
-- pgAdmin → http://localhost:8080 (login `admin@example.com` / `admin`)
+### 2. Start the earthquakes stack (`scientific-data/`)
+
+```bash
+docker compose -f scientific-data/docker-compose.yml up -d --build --wait
+```
+
+- Postgres → `localhost:5433` (database `scientific_data`); inside the stack it is
+  `sci-db:5432`
 - Dashboard → http://localhost:8501
-- In pgAdmin, register a server with host `db` and port `5432` (inside the Docker
-  network, user `postgres`).
 
-The `app` service waits for Postgres to be healthy, and `--build` rebuilds the image
-when the Python code changes.
-
-### 2. Load earthquake data (inside the app container)
+### 3. Load earthquake data
 
 ```bash
-docker compose run --rm app python ingest.py                                     # last 30 days, min magnitude 2.5
-docker compose run --rm app python ingest.py --starttime 2026-01-01 --endtime 2026-03-01 --min-magnitude 4.0
+docker compose -f scientific-data/docker-compose.yml run --rm earthquakes-app python ingest.py
 ```
 
-Re-running is safe: ingestion upserts keyed on the USGS event id, so rows are never duplicated.
+Re-running is safe: ingestion upserts keyed on the USGS event id, so rows are never
+duplicated.
 
-### 3. Restart / inspect the dashboard container
+### 4. Start the simulated city stack (`city-simulation/`)
 
 ```bash
-docker compose up -d app        # start just the dashboard container
-docker compose logs -f app      # follow its logs
+docker compose -f city-simulation/docker-compose.yml up -d --wait
+docker compose -f city-simulation/docker-compose.yml run --rm citygen python generate.py --population 1000 --buildings-per-block 8 --seed 42
 ```
 
-Open http://localhost:8501 — filter by magnitude and date in the sidebar.
+- City Postgres → `localhost:5434` (database `city`); inside the stack it is
+  `city-db:5432`. Re-running the generator is a no-op.
+
+### 5. pgAdmin
+
+http://localhost:8080 (login `admin@example.com` / `admin`) — both databases are
+**pre-registered automatically** from `pgadmin/servers.json` (the container loads it at
+first init). Open the tree, pick a server and connect — password `postgres`.
 
 ### (Optional) Running the app directly on the host
 
-For learning, you can also run it without Docker:
+For learning, you can also run the earthquakes scripts without Docker:
 
 ```bash
 python -m venv .venv
-pip install -r app/requirements.txt        # after activating the venv (see CHEATSHEET.md)
-python app/ingest.py
-streamlit run app/dashboard.py
+pip install -r scientific-data/earthquakes/requirements.txt
+python scientific-data/earthquakes/ingest.py
+streamlit run scientific-data/earthquakes/dashboard.py
 ```
 
-When run on the host, the app reads `.env` (`POSTGRES_HOST=localhost`, `POSTGRES_PORT=5433`)
-to reach the same Docker Postgres.
+When run on the host, the scripts read the repo-root `.env` (`POSTGRES_HOST=localhost`,
+`POSTGRES_PORT=5433`). The city generator uses `CITY_POSTGRES_HOST/PORT/DB` instead
+(see `.env.example`).
+
+## 🏭 Simulated city generator
+
+The `city-simulation/` stack: the `citygen` service **generates a fictional steam-punk
+grid city** (5 districts, 112 road segments, 64 intersections, ~353 buildings of 8
+types) into its own Postgres container (`city-db`). Everything derives from two inputs
+— `--population` and `--buildings-per-block` — via city-planning formulas (houses =
+people ÷ 3, schools = children ÷ 150, grid side = f(total buildings), …). Names come
+from editable word pools (`city-simulation/pools/`), drawn deterministically from a
+seed — **no AI at generation time**.
+
+```bash
+docker compose -f city-simulation/docker-compose.yml run --rm citygen python generate.py --dry-run --seed 42   # preview
+docker compose -f city-simulation/docker-compose.yml run --rm citygen python generate.py --seed 42             # generate
+```
+
+- Re-running is a **no-op** (idempotent fill-up-to-target) — same seed, same city, no
+  duplicates, always.
+- `city-db` listens on `localhost:5434` (database `city`); Postgres auto-creates the
+  schema from `city-simulation/sql/city.sql` on first boot.
+- The `--seed` is how you get the same city back, every time.
 
 ## 🧭 Current state vs. future
 
-- **Implemented (this README):** Phase 0 (scaffolding) and Phase 1 (earthquake MVP).
-- **Not yet implemented:** future thoughts — upcoming phases (hardening, multi-source
-  data, ML) are planned in [`notes/vision-and-roadmap.md`](notes/vision-and-roadmap.md).
+- **Implemented (this README):** Phase 0 (scaffolding), Phase 1 (earthquake MVP), and
+  the simulated city generator — as two independent stacks, each with its own Postgres.
+- **Not yet implemented:** future thoughts — hardening, more scientific sources, ML, and
+  the city's people/telemetry layers — in [`notes/`](notes/README.md).
 
 ## 📚 Repository Layout
 
@@ -101,24 +141,38 @@ ScientificDataPlatform/
 ├── devlog/                 ← chronological project journal
 ├── notes/                  ← future plans & ideas (not yet implemented)
 ├── .cline/rules/           ← rules loaded by Cline / agents working here
-├── docker-compose.yml      ← Postgres 16 + pgAdmin 4 + app (Docker)
+├── docker-compose.yml      ← SHARED: pgAdmin + shared network (both stacks join it)
+├── pgadmin/                ← shared pgAdmin seed: servers.json (auto-registers both DBs)
 ├── .env.example            ← env template; copy to .env (git-ignored)
-├── sql/
-│   └── schema.sql          ← auto-applied on the first `docker compose up`
-├── app/
-│   ├── Dockerfile          ← container image for ingest + dashboard
-│   ├── .dockerignore
-│   ├── ingest.py           ← USGS API → Postgres (idempotent upsert)
-│   ├── dashboard.py        ← Streamlit dashboard
-│   └── requirements.txt    ← pinned Python dependencies
+├── scientific-data/        ← pipeline 1: USGS Earthquakes (own Postgres, own compose)
+│   ├── docker-compose.yml  ← services: sci-db (Postgres 16, host :5433) + earthquakes-app
+│   ├── CHEATSHEET.md       ← stack commands (USGS, ingest, psql, Streamlit)
+│   ├── TECHNOLOGIES.md     ← stack technologies (scoped)
+│   ├── sql/schema.sql      ← earthquakes schema (auto-applied on first sci-db boot)
+│   └── earthquakes/
+│       ├── Dockerfile      ← image for ingest + dashboard
+│       ├── ingest.py       ← USGS API → Postgres (idempotent upsert)
+│       ├── dashboard.py    ← Streamlit dashboard
+│       └── requirements.txt← pinned Python dependencies
+├── city-simulation/        ← pipeline 2: simulated city (own Postgres, own compose)
+│   ├── docker-compose.yml  ← services: city-db (Postgres 16, host :5434) + citygen
+│   ├── CHEATSHEET.md       ← stack commands (generate, dry-run, psql, pools)
+│   ├── TECHNOLOGIES.md     ← stack technologies (scoped)
+│   ├── sql/city.sql        ← city schema (auto-applied on first city-db boot)
+│   ├── citygen/
+│   │   ├── Dockerfile      ← image for the generator
+│   │   ├── generate.py     ← deterministic generator (formulas + pools + fill loop)
+│   │   └── requirements.txt← pinned Python dependencies
+│   └── pools/              ← steam-punk name pools (one word per line; editable)
 └── data/                   ← raw / processed data notes (never commit payloads)
 ```
 
 ## 🧰 Tech Stack — TL;DR
 
 - **Language:** Python (end to end — ingestion → storage glue → visualization)
-- **Storage:** PostgreSQL via Docker Compose
+- **Storage:** PostgreSQL via Docker Compose — **one Postgres per pipeline** (sci + city), shared tooling separate
 - **Visualization:** Streamlit (simple, beginner-friendly)
+- **Simulation:** own deterministic generator (`city-simulation/citygen`) — planning formulas + word pools, no AI
 - **AI assistance (dev workflow):** OpenRouter as the LLM provider
 - **Current stack details:** see [`TECHNOLOGIES.md`](TECHNOLOGIES.md)
 

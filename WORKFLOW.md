@@ -230,6 +230,9 @@ with, and how you solved it.
 
 Fill in each section with commands as you actually use them:
 
+Tip: when a second pipeline/stack appears (its own compose file), split — keep a shared
+`CHEATSHEET.md` at the root for cross-stack stuff and one `CHEATSHEET.md` per module.
+
 ````markdown
 # Command & Syntax Cheat Sheet
 
@@ -309,6 +312,9 @@ print(len(at.exception), [e.value for e in at.exception])
 ---
 
 ## 5. `TECHNOLOGIES.md` — `PASTE →` (current-only policy)
+
+Like the cheat sheet: one per module once pipelines own their compose files — the root
+file lists only shared technology; modules list their own stack.
 
 ````markdown
 # Technologies in Use

@@ -1,0 +1,24 @@
+{
+  "Servers": {
+    "1": {
+      "Name": "sci-db (earthquakes)",
+      "Group": "Servers",
+      "Comment": "USGS earthquakes stack — database scientific_data",
+      "Host": "sci-db",
+      "Port": 5432,
+      "MaintenanceDB": "postgres",
+      "Username": "postgres",
+      "SSLMode": "prefer"
+    },
+    "2": {
+      "Name": "city-db (simulated city)",
+      "Group": "Servers",
+      "Comment": "Simulated city stack — database city",
+      "Host": "city-db",
+      "Port": 5432,
+      "MaintenanceDB": "postgres",
+      "Username": "postgres",
+      "SSLMode": "prefer"
+    }
+  }
+}
