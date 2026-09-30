@@ -413,6 +413,8 @@ Working commands only (with `docker compose ...`, etc.).
 ## Docs in this repo
 - `TECHNOLOGIES.md` — technologies in use
 - `CHEATSHEET.md` — commands/syntax that worked
+- Owned runtime-config seeds (e.g. the admin tool's pre-registered server list, a
+  `servers.json`) are repo files too: keep them in sync when hostnames/ports change.
 - `devlog/` — the journal (one file per day)
 - `notes/` — future plans (not implemented)
 - `WORKFLOW.md` — this template

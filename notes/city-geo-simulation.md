@@ -126,6 +126,12 @@ are what we formula-ize.
   city can produce, so even a far-bigger city still samples a drop in the bucket. Pools
   are plain text files (`city-simulation/pools/*.txt`, one word per line) — adding a
   line grows the space with no code changes.
+- **Pair-type capacity (fixed 2026-09-30):** restaurant names ("X & Y") are drawn
+  without replacement from the *combination* space `n × (n-1)`; with 34 words that is
+  1,122 names (~population 140k at 1 restaurant per 250). Other pool types are plain
+  products (`school_name × school_level`, …). If a run ever fails with "Need N …
+  from pool 'X'", the message states the capacity — **grow that pool file**, it is the
+  designed lever.
 - **Uniqueness & determinism:** names are drawn **without replacement** from the
   combination space using the seed's RNG; if a pool ever ran dry (shouldn't happen), the
   fallback is appending a number. Names become columns on the rows — readable, stable
@@ -150,8 +156,12 @@ are what we formula-ize.
 - Loop: connect → **count current rows** → generate **only the missing rows** (natural
   keys, upsert) in small batches (e.g. 5k rows/write) → repeat until every count ≥
   target → print a summary (rows generated, durations, per-table counts) → exit 0.
-- Idempotent by construction: re-run with the same target is a no-op; lower target is a
-  no-op too; a higher target (or a bigger `--population`) tops the DB up. Never duplicates.
+- Idempotent by construction: identical parameters → no-op (never duplicates).
+- **One canonical city per database**: the DB is keyed by `(population,
+  buildings-per-block, seed)`. Anything different (a new seed, a resize) would merge two
+  seed-shaped cities via overlapping natural keys — so it is refused with clear
+  instructions. To generate a different city, reset the volume first:
+  `docker compose -f city-simulation/docker-compose.yml down -v`.
 - Byte-size targets (`--target-mb`) can be layered on later if wanted.
 
 ### Key design / idempotency (same disciplines as the USGS pipeline)

@@ -117,8 +117,11 @@ docker compose -f city-simulation/docker-compose.yml run --rm citygen python gen
 docker compose -f city-simulation/docker-compose.yml run --rm citygen python generate.py --seed 42             # generate
 ```
 
-- Re-running is a **no-op** (idempotent fill-up-to-target) — same seed, same city, no
-  duplicates, always.
+- Re-running the same parameters is a **no-op** — same city, no duplicates, always.
+- The database holds **one canonical city** defined by `--population` +
+  `--buildings-per-block` + `--seed`; anything different is refused with instructions.
+  To generate a different city, reset first:
+  `docker compose -f city-simulation/docker-compose.yml down -v`.
 - `city-db` listens on `localhost:5434` (database `city`); Postgres auto-creates the
   schema from `city-simulation/sql/city.sql` on first boot.
 - The `--seed` is how you get the same city back, every time.

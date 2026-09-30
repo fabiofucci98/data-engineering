@@ -18,3 +18,17 @@ Ember
 Cinder
 Tinder
 Lamplight
+Bun
+Stove
+Pan
+Turner
+Hopper
+Teapot
+Sizzle
+Brewhouse
+Churn
+Waffler
+Braisier
+Copperpot
+Kettlehouse
+Stoker

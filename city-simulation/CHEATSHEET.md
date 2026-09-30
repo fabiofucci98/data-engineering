@@ -20,6 +20,10 @@ DB is `localhost:5434`, database `city`.
 
 - Inputs: `--population`, `--buildings-per-block`, `--seed`. Everything else derives
   (planning formulas live in the `ASSUMPTIONS` block of `citygen/generate.py`).
+- **One canonical city per DB**: params (population, buildings-per-block, seed) must
+  match the stored city to resume (that run is a no-op). A different seed OR size is
+  refused with a clear error — `docker compose -f city-simulation\docker-compose.yml
+  down -v` resets the volume, then re-generate.
 - Same seed = same city, every time. Adding a word to a `pools/*.txt` file shifts which
   names a given seed produces — settle on a seed to keep a city stable.
 - `--dry-run` previews the **exact** city a run will write (it mirrors the run's RNG
@@ -42,3 +46,5 @@ stacks' connections can never be confused.
   the note `notes/city-geo-simulation.md`.
 - Keep the product space ≥ 100× the largest city the pools will serve (grow the files,
   not the code).
+- **If a run fails with `Need N … from pool 'X'`**: the message states the pool's
+  capacity — add words to `pools/X.txt` and re-run (same seed, reproducible).

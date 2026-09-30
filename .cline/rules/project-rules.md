@@ -14,7 +14,8 @@ These rules apply to **everyone working in this repository**: humans and AI agen
 - **Python 3.11+** is the language end to end.
 - Layout (in use since the repo restructure of 2026-09-30):
   - A shared `docker-compose.yml` at the repo root for **cross-stack tooling only**
-    (currently pgAdmin + the shared network).
+    (currently pgAdmin + the shared network; pgAdmin's auto-registration seed lives in
+    `pgadmin/servers.json`).
   - Each data pipeline is a self-contained folder with **its own `docker-compose.yml`
     and its own Postgres**: `scientific-data/` (earthquakes app) and
     `city-simulation/` (city generator + pools).
@@ -62,6 +63,10 @@ These rules apply to **everyone working in this repository**: humans and AI agen
   so a command or gotcha lands in the file that owns its domain, and nothing is
   relearned twice. A stage that introduces new tooling should update the files in the
   same change.
+- **Keep the shared pgAdmin seed (`pgadmin/servers.json`) in sync whenever a database's
+  host/port/name changes** — pgAdmin auto-registers from that file on its first init
+  (mechanism + how-to: root `CHEATSHEET.md`), so a stale seed silently points at the
+  wrong place.
 - The **README describes the current state only**: anything not yet implemented belongs in
   `notes/` (the thinking space for the future). When an idea becomes real, move it from
   `notes/` into the README and mark the note accordingly.

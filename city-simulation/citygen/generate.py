@@ -213,18 +213,31 @@ class NameBuilder:
         return words[:count]
 
     def unique_pairs(self, pool: str, count: int, joiner: str = " & ") -> list[str]:
-        """'A & B' compounds from two distinct draws of the same pool."""
+        """'A & B' compounds, drawn WITHOUT replacement from the combination space.
+
+        Capacity is n x (n-1) distinct ordered pairs (not n/2) — the pool explodes
+        combinatorially, matching the product rule of `unique`. n words support
+        n*(n-1) pairs: 20 words -> 380 restaurant names (population ~47k at 1/250).
+        """
         pool_words = self.pool(pool)
-        if 2 * count > len(pool_words):
+        n = len(pool_words)
+        space = n * (n - 1)
+        if count > space:
             raise ValueError(
-                f"Need {2 * count} draws from pool '{pool}' ({len(pool_words)} words)."
+                f"Need {count} {joiner.strip()} - compounds from pool '{pool}' "
+                f"(capacity {space}: {n} words -> {n}x{n-1} combinations). "
+                f"Grow the pool: add words to pools/{pool}.txt."
             )
-        order = list(range(len(pool_words)))
+        order = list(range(space))
         self.rng.shuffle(order)
-        return [
-            f"{pool_words[order[2 * i]]}{joiner}{pool_words[order[2 * i + 1]]}"
-            for i in range(count)
-        ]
+        names = []
+        for k in order[:count]:
+            a = k % n
+            b = (k // n) % (n - 1)
+            if b >= a:  # bijection onto ordered pairs with distinct words
+                b += 1
+            names.append(f"{pool_words[a]}{joiner}{pool_words[b]}")
+        return names
 
 
 def building_names(name_builder: NameBuilder, building_type: str, count: int) -> list[str]:
@@ -535,6 +548,35 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
+def ensure_seed_consistency(conn: psycopg.Connection, plan: CityPlan) -> None:
+    """A city DB holds exactly ONE canonical city: (seed, population, buildings-per-block).
+
+    Matching params = idempotent resume (no-op). Anything different would merge a
+    second, seed-shaped city into the same tables — natural keys overlap, names clash,
+    and count expectations break. Refuse with instructions instead.
+    """
+    with conn.cursor() as cur:
+        cur.execute(
+            "SELECT population, buildings_per_block, seed "
+            "FROM city_generation WHERE id = 1"
+        )
+        row = cur.fetchone()
+    if row is None:
+        return  # fresh database — first generation wins
+    pop, bpb, seed = int(row[0]), int(row[1]), int(row[2])
+    if (seed, pop, bpb) == (plan.seed, plan.population, plan.buildings_per_block):
+        return  # identical city — safe resumable no-op
+    raise SystemExit(
+        f"ERROR: citydb already holds a different city: "
+        f"population {pop}, buildings-per-block {bpb}, seed {seed}.\n"
+        f"Requested: population {plan.population}, buildings-per-block "
+        f"{plan.buildings_per_block}, seed {plan.seed}.\n"
+        "A database stores exactly one canonical city. To generate a different one:\n"
+        "  docker compose -f city-simulation/docker-compose.yml down -v\n"
+        "then re-run generate.py with the parameters you want."
+    )
+
+
 def main() -> None:
     load_dotenv(PACKAGE_DIR.parent / ".env")
     args = parse_args()
@@ -555,19 +597,8 @@ def main() -> None:
     t0 = time.time()
     try:
         with psycopg.connect(database_url()) as conn:
-            # 1. generation metadata (params of this run)
-            with conn.cursor() as cur:
-                cur.execute(
-                    GENERATION_SQL,
-                    {
-                        "population": plan.population,
-                        "buildings_per_block": plan.buildings_per_block,
-                        "seed": plan.seed,
-                        "total_buildings": plan.total_buildings,
-                        "grid_side": plan.grid_side,
-                    },
-                )
-            conn.commit()
+            # 0. the DB holds one canonical city: (seed, population, buildings-per-block)
+            ensure_seed_consistency(conn, plan)
 
             # 2. districts (need names + ids before buildings)
             districts = district_rows(name_builder)
@@ -597,6 +628,22 @@ def main() -> None:
             )
             inserted = fill_table(conn, "buildings", BUILDINGS_SQL, buildings, plan.total_buildings)
             print_table_result(conn, "buildings", inserted, plan.total_buildings)
+
+            # last: generation metadata — written ONLY after a successful run, so a
+            # crashed run can never poison the seed guard above (city_generation
+            # always describes a COMPLETED city).
+            with conn.cursor() as cur:
+                cur.execute(
+                    GENERATION_SQL,
+                    {
+                        "population": plan.population,
+                        "buildings_per_block": plan.buildings_per_block,
+                        "seed": plan.seed,
+                        "total_buildings": plan.total_buildings,
+                        "grid_side": plan.grid_side,
+                    },
+                )
+            conn.commit()
     except psycopg.OperationalError as exc:
         print(f"ERROR: cannot connect to Postgres ({exc}). Is the city-db service up?")
         raise SystemExit(1)

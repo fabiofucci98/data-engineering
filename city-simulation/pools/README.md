@@ -23,7 +23,8 @@ without replacement — and **never calls an AI/LLM at runtime**.
 
 - One word per line; no numbering, no inline commas.
 - Distinct names per entity = product of the pool sizes it draws from (roads:
-  |first| × |middle| × |type|). Pools should support ≥ 100× the largest count a city
-  can need, so they should feel bigger than necessary.
+  |first| × |middle| × |type|; restaurant pairs "X & Y": n × (n−1) — two distinct draws
+  from the same pool). Pools should support ≥ 100× the largest count a city can need,
+  so they should feel bigger than necessary.
 - Adding a line grows the space with no code changes. (It also shifts which names a
   given seed produces — settle on a seed to keep a city stable.)
