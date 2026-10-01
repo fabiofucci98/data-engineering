@@ -1,0 +1,59 @@
+# Scientific Data Platform — simulated city pipeline (its own Postgres).
+# Self-contained: `city-db` + the `citygen` generator are all here.
+# The shared network `sdp-shared` is created by the root docker-compose.yml
+# (bring that up first so pgAdmin can reach city-db by service name).
+name: city-simulation
+
+services:
+  city-db:
+    image: postgres:16-alpine
+    container_name: sdp-city-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: city
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+    ports:
+      - "${CITY_POSTGRES_PORT:-5434}:5432"
+    volumes:
+      # Runs sql/city.sql automatically on first boot (empty data dir only).
+      - ./sql/city.sql:/docker-entrypoint-initdb.d/city.sql:ro
+      - city_db_data:/var/lib/postgresql/data
+    networks:
+      - default
+      - shared
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d city"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  citygen:
+    build: ./citygen
+    restart: "no"
+    environment:
+      # CITY_* so this stack's connection can never collide with the earthquakes one.
+      CITY_POSTGRES_DB: city
+      CITY_POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      CITY_POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      CITY_POSTGRES_HOST: city-db
+      CITY_POSTGRES_PORT: "5432"
+      CITY_POOLS_DIR: /pools
+    working_dir: /citygen
+    volumes:
+      # Live code + pools: edit without rebuilding while developing.
+      - ./citygen:/citygen
+      - ./pools:/pools
+    depends_on:
+      city-db:
+        condition: service_healthy
+    networks:
+      - default
+
+networks:
+  shared:
+    external: true
+    name: sdp-shared
+
+volumes:
+  city_db_data:

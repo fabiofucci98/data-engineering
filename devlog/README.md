@@ -51,3 +51,7 @@ with, and how you solved it.
 
 - [2026-09-27.md](2026-09-27.md) — project kickoff, Phase 1 build, rule changes,
   containerization, docs restructure (11 chat entries).
+- [2026-09-29.md](2026-09-29.md) — "add until it breaks" strategy + first milestone
+  decisions (2 chat entries).
+- [2026-09-30.md](2026-09-30.md) — simulated city direction — what to simulate
+  (1 chat entry so far, WIP).

@@ -1,59 +1,35 @@
-# Technologies in Use
+# Technologies in Use — shared / cross-stack
 
-This document lists the technologies **currently in use** in this repository.
-It is not a roadmap: future tools are added here only when they are actually adopted.
+This document covers the **repo-wide and shared** technologies only. Each pipeline
+folder keeps its own focused `TECHNOLOGIES.md`:
+- [`scientific-data/TECHNOLOGIES.md`](scientific-data/TECHNOLOGIES.md) — USGS earthquakes stack
+- [`city-simulation/TECHNOLOGIES.md`](city-simulation/TECHNOLOGIES.md) — simulated city stack
 
-> Last reviewed: 2026-09-27 (end of Phase 1, Python app containerized)
+> Last reviewed: 2026-09-30 (per-pipeline TECHNOLOGY docs introduced during the restructure)
 
-## Data source
-
-| Technology | Where / Why |
-|---|---|
-| USGS Earthquakes API (FDSN Event Service) | `app/ingest.py` fetches `format=geojson` events; no API key required |
-
-## Infrastructure
+## Infrastructure (shared)
 
 | Technology | Version | Where / Why |
 |---|---|---|
-| Docker + Docker Compose | Docker Engine 29.x, Compose v5 | Runs the whole platform — `db`, `pgadmin`, `app` services (`docker compose up -d`) |
+| Docker + Docker Compose | Docker Engine 29.x, Compose v5 | Three compose files — root = shared tooling (pgAdmin, shared network); each pipeline owns its stack + Postgres in its own compose |
+| pgAdmin 4 | `dpage/pgadmin4:latest` | Root compose only (shared dev tool); web UI at http://localhost:8080; databases auto-registered from `pgadmin/servers.json` at first init |
 | Git + GitHub | — | Version control — humans commit/push; agents never |
 | VS Code | — | Editor used for this repo |
 | OpenRouter | — | LLM provider for AI-assisted development (e.g., Cline) in this environment |
 
-> Note: the dev-tooling rows here (VS Code, OpenRouter) describe how this repo is built
-> and edited — they are not part of the running pipeline.
+> Dev-tooling rows (VS Code, OpenRouter) describe how this repo is built and edited —
+> they are not part of the running pipelines.
 
-## Data storage
+## Shared network
 
-| Technology | Version | Where / Why |
-|---|---|---|
-| PostgreSQL | `postgres:16-alpine` | `db` service; `sql/schema.sql` auto-applied on first boot; published on host port 5433 |
-| pgAdmin 4 | `dpage/pgadmin4:latest` | `pgadmin` service; web UI at http://localhost:8080 |
-
-## Python application (`app` service)
-
-| Technology | Version | Where / Why |
-|---|---|---|
-| Python | `python:3.13-slim` | Language end to end (ingest + dashboard) |
-| `requests` | 2.32.3 | USGS API calls |
-| `psycopg` (v3) | 3.2.3 | Postgres driver in `ingest.py`; SQLAlchemy dials it via `postgresql+psycopg://` |
-| `SQLAlchemy` | 2.0.36 | Engine used by the dashboard to query Postgres |
-| `pandas` | 2.2.3 | Query results → DataFrames for charting |
-| `Streamlit` | 1.40.0 | Dashboard (`st.map`, `st.bar_chart`, `st.dataframe`, `st.metric`) |
-| `python-dotenv` | 1.0.1 | Loads `.env` configuration |
-
-## How the services connect
-
-- Inside Docker: `app` → `db` via hostname `db`, port `5432` (container-internal).
-- From the host: Postgres at `localhost:5433`, dashboard at `localhost:8501`, pgAdmin at `localhost:8080`.
-
-## Version pinning
-
-- Python dependencies: pinned in `app/requirements.txt`.
-- Images: pinned in `docker-compose.yml` (`postgres:16-alpine`) and `app/Dockerfile`
-  (`python:3.13-slim`); pgAdmin tracks `latest`.
+- `sdp-shared` (created by the root compose): `scientific-data`'s `sci-db` and
+  `city-simulation`'s `city-db` join it, so pgAdmin reaches both by service name
+  (`sci-db:5432`, `city-db:5432`).
 
 ## Policy
 
-- Future tools (schedulers such as cron / Prefect / Airflow, dbt, ML frameworks, additional
-  data sources) do **not** belong in this document until they are part of the codebase.
+- Per-stack technologies (Postgres per database, Python app versions, the generator,
+  word pools) belong in the pipeline's own `TECHNOLOGIES.md`, not here.
+- Future tools (schedulers such as cron / Prefect / Airflow, dbt, ML frameworks,
+  additional data sources) do **not** belong in any tech doc until they are part of
+  the codebase.

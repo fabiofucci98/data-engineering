@@ -1,8 +1,12 @@
-# Command & Syntax Cheat Sheet
+# Command & Syntax Cheat Sheet — shared / cross-stack
 
-> **Living document** — update me whenever you use a new command, flag, or syntax snippet
-> (that's a project rule — see `.cline/rules/project-rules.md`). Everything below was
-> **used and verified** in this repo (Phase 1, 2026-09-27).
+Per-stack commands live next to each pipeline:
+- [`scientific-data/CHEATSHEET.md`](scientific-data/CHEATSHEET.md) — USGS earthquakes stack
+- [`city-simulation/CHEATSHEET.md`](city-simulation/CHEATSHEET.md) — simulated city stack
+
+> **Living document** — update me whenever a command, flag, or syntax snippet proves useful
+> (that's a project rule — `.cline/rules/project-rules.md`). Everything below was
+> **used and verified** in this repo (through 2026-09-30, repo restructure day).
 
 ## Git
 
@@ -22,56 +26,63 @@
 > ⚠️ Run git commands **sequentially** — parallel git in the same repo causes
 > `index.lock` conflicts and garbled commits.
 
-## Docker & Docker Compose
+## Docker & Docker Compose (shared)
+
+Three compose files: root = shared tooling (pgAdmin + the shared network); each pipeline
+folder owns its stack **and its own Postgres** in its compose file.
 
 | Task | Command |
 |---|---|
-| Validate config | `docker compose config --quiet` |
-| Start (wait for healthy) | `docker compose up -d --wait` |
-| Status | `docker compose ps` |
-| Logs | `docker compose logs -f db` |
-| Stop (keep data) | `docker compose down` |
-| Stop + destroy volumes | `docker compose down -v` |
-| Exec in db container | `docker compose exec -T db psql -U postgres -d scientific_data -c "SELECT 1"` |
-| Build the app image | `docker compose build app` |
-| Run ingest in the container | `docker compose run --rm app python ingest.py` |
-| Start the dashboard (in container) | `docker compose up -d app` |
-| Rebuild + restart app | `docker compose up -d --build app` |
-| App logs | `docker compose logs -f app` |
+| Validate root config | `docker compose config --quiet` |
+| Start shared tooling (pgAdmin + shared network) | `docker compose up -d` *(first — the stacks join its network)* |
+| Inspect the shared network | `docker network inspect sdp-shared` |
+| Stop the shared tooling | `docker compose down` |
+| Wipe shared data | `docker compose down -v` *(destructive)* |
 
-Key `docker-compose.yml` syntax (verified):
-- Port mapping `"${POSTGRES_PORT:-5433}:5432"` → `host:container`
-- **Service-to-service networking**: inside the Compose network the app reaches Postgres
-  via hostname `db` on internal port `5432`; from the host the same DB is `localhost:5433`.
-  That's why the `app` service overrides `POSTGRES_HOST` / `POSTGRES_PORT`.
-- Named volume: `db_data:/var/lib/postgresql/data`
-- **Auto-init on first boot**: mount `./sql:/docker-entrypoint-initdb.d:ro` — runs `*.sql`
-  alphabetically, but ONLY when the data volume is empty
+pgAdmin notes (verified):
+- Servers are **auto-registered** from `pgadmin/servers.json` — the image's entrypoint
+  runs `setup.py load-servers <file> --user <email>` on first init (env
+  `PGADMIN_SERVER_JSON_FILE`, default `/pgadmin4/servers.json`).
+- If DB hosts ever change: refresh on a fresh init (wipe the pgAdmin volume once) or set
+  `PGADMIN_REPLACE_SERVERS_ON_STARTUP=True` so every restart re-syncs the file.
+
+Key compose syntax (verified):
+- **One compose per pipeline**: each stack owns its DB, its network, its volumes — the
+  databases are physically separate. Shared components live only in the root file.
+- Stacks attach their DBs to the shared network with:
+  ```yaml
+  networks:
+    shared:
+      external: true
+      name: sdp-shared
+  ```
+- Port mapping `"${PORT:-5433}:5432"` → `host:container`
+- Named volumes per stack (`sci_db_data`, `city_db_data`); `pgadmin_data` at root
+- **Auto-init on first boot**: mount `./sql:/docker-entrypoint-initdb.d:ro` (whole
+  folder) or a single file — runs ONLY when the volume is empty
 - Healthcheck + `--wait`:
   ```yaml
   healthcheck:
-    test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-scientific_data}"]
+    test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d scientific_data"]
   ```
-- Compose auto-reads `.env` from the same folder
+- `.env` lives at the repo root; run compose from the root so `${VAR}` interpolates it
+- Gotcha: a string that *looks* like `\"SELECT 1\"` on screen is usually a plain `"` in
+  the file (PowerShell merely displays the escape). When an exact-match edit refuses to
+  find text, hex-dump the line — `((Get-Content file)[N]) | Format-Hex` — to see the
+  real bytes.
 
-## PostgreSQL / psql
+## PostgreSQL / psql (generic patterns)
 
-| Task | Command |
-|---|---|
-| List tables | `psql -U postgres -d scientific_data -c "\dt"` |
-| Describe a table | `psql -U postgres -d scientific_data -c "\d earthquakes"` |
-| Count | `SELECT count(*) FROM earthquakes;` |
-| Exit | `\q` |
-
-Verified patterns that matter here:
 - **Idempotent upsert** (re-runs never duplicate rows):
   ```sql
   INSERT INTO earthquakes (event_id, mag, ...) VALUES (%s, %s, ...)
   ON CONFLICT (event_id) DO UPDATE SET mag = EXCLUDED.mag, ...;
   ```
+  Or `ON CONFLICT (...) DO NOTHING` when a fill loop owns regeneration (the city
+  generator's pattern).
 - Timestamps: `TIMESTAMPTZ NOT NULL DEFAULT now()` (UTC-aware)
 - `CREATE TABLE IF NOT EXISTS ...` / `CREATE INDEX IF NOT EXISTS ...` → re-runnable schema
-- pgAdmin server: host = `db` (container name), port = `5432` (**container-internal**), user = `postgres`
+- psql for a specific database runs via its stack — see the per-stack cheat sheets.
 
 ## Python / venv / pip
 
@@ -80,51 +91,15 @@ Verified patterns that matter here:
 | Create venv | `python -m venv .venv` |
 | Activate (Windows) | `.venv\Scripts\activate` |
 | Activate (macOS/Linux) | `source .venv/bin/activate` |
-| Install | `pip install -r app/requirements.txt` |
-| Syntax check | `python -m py_compile app/ingest.py app/dashboard.py` |
+| Install | `pip install -r <stack>/requirements.txt` |
+| Syntax check | `python -m py_compile <script.py>` |
+| Unit tests | `pytest -m "not integration"` (needs `pip install -r requirements-dev.txt`; no Docker/network) |
+| Integration tests (needs a Postgres) | `$env:RUN_INTEGRATION="1"; $env:CITY_POSTGRES_HOST="localhost"; $env:CITY_POSTGRES_PORT="5434"; $env:CITY_POSTGRES_DB="city"; pytest -m integration` |
 
-Dependency gotchas (each cost me time once — see devlog):
+Dependency gotchas (each cost time once — see devlog):
 - **SQLAlchemy defaults to `psycopg2`**, but we use psycopg v3 → connection URL must be
   `postgresql+psycopg://user:pass@host:port/db`
-- **`load_dotenv()` uses CWD** — Streamlit runs scripts from another directory. Use:
-  `load_dotenv(Path(__file__).resolve().parent.parent / ".env")`
+- **`load_dotenv()` uses CWD** — always load by absolute path
+  (`Path(__file__).resolve().parent.parent.parent / ".env"` with per-pipeline folders;
+  harmless no-op inside containers where compose sets the env)
 - **Windows console is `cp1252`**: `print("→")` crashes → keep console output ASCII-safe
-
-## USGS Earthquake API
-
-Base: `https://earthquake.usgs.gov/fdsnws/event/1/query`
-
-| Use case | Query |
-|---|---|
-| Last 30 days, min mag 2.5 | `?format=geojson&starttime=2026-08-28&minmagnitude=2.5&eventtype=earthquake&orderby=time` |
-| Count only | `https://earthquake.usgs.gov/fdsnws/event/1/count?starttime=2026-01-01&endtime=2026-01-02` |
-
-GeoJSON shape (memorize!):
-- `features[].properties.{mag, place, time, updated, url, ...}`
-- `features[].geometry.coordinates = [longitude, latitude, depth_km]` — **longitude FIRST**
-- Paging: `limit` + `offset`; total comes back in `metadata.count`
-- Public API — no key needed
-
-## Streamlit
-
-| Task | Command |
-|---|---|
-| Run | `streamlit run app/dashboard.py` |
-| Test headlessly | `streamlit.testing.v1.AppTest` (below) |
-
-Widgets verified in this repo:
-- `st.map(df[["lat","lon"]])` — points on a map (needs lowercase `lat`, `lon` columns)
-- `st.bar_chart(series)` — quick bar chart from a pandas Series
-- `st.metric("Label", value)` — KPI numbers
-- `st.dataframe(df, column_config={...})` — filterable table with typed/link columns
-- `st.cache_data(ttl=60)` — cache a function's result (e.g., DB queries)
-- Sidebar: `with st.sidebar:` + `st.slider`, `st.date_input`
-
-Headless test that caught real bugs:
-```python
-from streamlit.testing.v1 import AppTest
-
-at = AppTest.from_file("app/dashboard.py", default_timeout=90)
-at.run()
-print(len(at.exception), [e.value for e in at.exception])
-```

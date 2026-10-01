@@ -3,7 +3,7 @@
 Reads the `earthquakes` table from PostgreSQL and renders an interactive
 map, metrics, and charts. Run from the repo root with:
 
-    streamlit run app/dashboard.py
+    streamlit run scientific-data/earthquakes/dashboard.py
 """
 from __future__ import annotations
 
@@ -16,8 +16,9 @@ import streamlit as st
 from dotenv import load_dotenv
 from sqlalchemy import create_engine, text
 
-# Load .env by absolute path so CWD never matters (app/ when running under Streamlit)
-load_dotenv(Path(__file__).resolve().parent.parent / ".env")
+# Load the repository-root .env by absolute path (container-safe: missing file is a
+# no-op there; compose sets the real values).
+load_dotenv(Path(__file__).resolve().parent.parent.parent / ".env")
 
 
 def database_url() -> str:

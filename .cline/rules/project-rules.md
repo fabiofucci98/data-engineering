@@ -12,9 +12,13 @@ These rules apply to **everyone working in this repository**: humans and AI agen
 ## 2. Code and structure
 
 - **Python 3.11+** is the language end to end.
-- Layout (in use since Phase 1):
-  - `docker-compose.yml` at the repo root.
-  - Application code under `app/`.
+- Layout (in use since the repo restructure of 2026-09-30):
+  - A shared `docker-compose.yml` at the repo root for **cross-stack tooling only**
+    (currently pgAdmin + the shared network; pgAdmin's auto-registration seed lives in
+    `pgadmin/servers.json`).
+  - Each data pipeline is a self-contained folder with **its own `docker-compose.yml`
+    and its own Postgres**: `scientific-data/` (earthquakes app) and
+    `city-simulation/` (city generator + pools).
   - Raw/processed data references under `data/` (never commit large payloads).
   - Future plans and ideas live under `notes/` — never in the README.
 - Keep code **simple and readable** — this is a learning project first, a platform second.
@@ -24,7 +28,8 @@ These rules apply to **everyone working in this repository**: humans and AI agen
 
 - Favor the **least complex tool that fits**. Don't introduce
   Airflow, dbt, or ML frameworks before the MVP exists — their time comes later.
-- When a stage advances, **update `TECHNOLOGIES.md`** to reflect reality.
+- When a stage advances, **update the corresponding `TECHNOLOGIES.md`** to reflect
+  reality (each pipeline folder has its own; the repo root one covers shared/cross-stack).
 
 ## 4. Data handling
 
@@ -53,9 +58,15 @@ These rules apply to **everyone working in this repository**: humans and AI agen
 - **Never fabricate the human's learning journey.** The devlog is the human's own account:
   agents never claim that the human learned, discovered, or struggled with something they
   didn't express. When an agent writes an entry, it must state plainly who did what.
-- **Keep `CHEATSHEET.md` (repo root) up to date**: any command, flag, or syntax snippet that
-  proves useful — or a gotcha that cost time — belongs there so it is never relearned.
-  A stage that introduces new tooling should update it in the same change.
+- **Keep `CHEATSHEET.md` / `TECHNOLOGIES.md` current**: each pipeline folder keeps its
+  own pair for its stack, and the repo-root files hold the shared/cross-stack versions —
+  so a command or gotcha lands in the file that owns its domain, and nothing is
+  relearned twice. A stage that introduces new tooling should update the files in the
+  same change.
+- **Keep the shared pgAdmin seed (`pgadmin/servers.json`) in sync whenever a database's
+  host/port/name changes** — pgAdmin auto-registers from that file on its first init
+  (mechanism + how-to: root `CHEATSHEET.md`), so a stale seed silently points at the
+  wrong place.
 - The **README describes the current state only**: anything not yet implemented belongs in
   `notes/` (the thinking space for the future). When an idea becomes real, move it from
   `notes/` into the README and mark the note accordingly.

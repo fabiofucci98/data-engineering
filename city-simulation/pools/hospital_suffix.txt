@@ -1,0 +1,6 @@
+General Hospital
+Medical Center
+Infirmary
+Clinic
+Sanatorium
+Dispensary

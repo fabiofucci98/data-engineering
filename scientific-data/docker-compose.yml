@@ -1,0 +1,59 @@
+# Scientific Data Platform — earthquakes pipeline (its own Postgres).
+# Self-contained: `db` + dashboard + ingest are all here.
+# The shared network `sdp-shared` is created by the root docker-compose.yml
+# (bring that up first so pgAdmin can reach sci-db by service name).
+name: scientific-data
+
+services:
+  sci-db:
+    image: postgres:16-alpine
+    container_name: sdp-sci-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: scientific_data
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+    ports:
+      - "${POSTGRES_PORT:-5433}:5432"
+    volumes:
+      # Runs sql/schema.sql automatically on first boot (empty data dir only).
+      - ./sql:/docker-entrypoint-initdb.d:ro
+      - sci_db_data:/var/lib/postgresql/data
+    networks:
+      - default
+      - shared
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d scientific_data"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  earthquakes-app:
+    build: ./earthquakes
+    container_name: sdp-sci-app
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: scientific_data
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      # Inside the stack network, the DB is reached by service name + internal port.
+      POSTGRES_HOST: sci-db
+      POSTGRES_PORT: "5432"
+    ports:
+      - "${STREAMLIT_PORT:-8501}:8501"
+    volumes:
+      # Live code volume: edit ./earthquakes without rebuilding while developing.
+      - ./earthquakes:/app
+    depends_on:
+      sci-db:
+        condition: service_healthy
+    networks:
+      - default
+
+networks:
+  shared:
+    external: true
+    name: sdp-shared
+
+volumes:
+  sci_db_data:

@@ -14,5 +14,5 @@ COPY . .
 EXPOSE 8501
 
 # Default: run the dashboard. Override with:
-#   docker compose run --rm app python ingest.py
+#   docker compose -f scientific-data/docker-compose.yml run --rm earthquakes-app python ingest.py
 CMD ["streamlit", "run", "dashboard.py", "--server.address", "0.0.0.0", "--server.port", "8501", "--server.headless", "true"]

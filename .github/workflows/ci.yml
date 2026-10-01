@@ -1,0 +1,68 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  unit-and-config:
+    name: Unit tests + config sanity
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Install dependencies
+        run: |
+          pip install -r scientific-data/earthquakes/requirements.txt
+          pip install -r city-simulation/citygen/requirements.txt
+          pip install -r requirements-dev.txt
+      - name: Syntax check (all scripts)
+        run: |
+          python -m py_compile scientific-data/earthquakes/ingest.py \
+                                scientific-data/earthquakes/dashboard.py \
+                                city-simulation/citygen/generate.py
+      - name: Unit tests
+        run: pytest -m "not integration" -v
+      - name: Compose config checks (shared + both stacks)
+        run: |
+          docker compose config --quiet
+          docker compose -f scientific-data/docker-compose.yml config --quiet
+          docker compose -f city-simulation/docker-compose.yml config --quiet
+
+  city-integration:
+    name: City generator integration (real Postgres)
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: city
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - "5432:5432"
+        options: >-
+          --health-cmd "pg_isready -U postgres -d city"
+          --health-interval 5s --health-timeout 5s --health-retries 12
+    env:
+      RUN_INTEGRATION: "1"
+      CITY_POSTGRES_HOST: localhost
+      CITY_POSTGRES_PORT: "5432"
+      CITY_POSTGRES_DB: city
+      CITY_POSTGRES_USER: postgres
+      CITY_POSTGRES_PASSWORD: postgres
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Install dependencies
+        run: |
+          pip install -r scientific-data/earthquakes/requirements.txt
+          pip install -r city-simulation/citygen/requirements.txt
+          pip install -r requirements-dev.txt
+      - name: Integration tests (fresh city -> idempotent rerun -> refusals)
+        run: pytest -m integration -v

@@ -7,8 +7,8 @@ Idempotent: rows are keyed on the USGS event id, so re-running the script
 updates existing rows instead of creating duplicates.
 
 Examples:
-    python app/ingest.py
-    python app/ingest.py --starttime 2026-01-01 --endtime 2026-03-01 --min-magnitude 4.0
+    python scientific-data/earthquakes/ingest.py
+    python scientific-data/earthquakes/ingest.py --starttime 2026-01-01 --endtime 2026-03-01 --min-magnitude 4.0
 """
 from __future__ import annotations
 
@@ -146,8 +146,9 @@ def upsert_events(conn: psycopg.Connection, rows: list[tuple]) -> None:
 
 
 def main() -> None:
-    # Load .env by absolute path so CWD never matters.
-    load_dotenv(Path(__file__).resolve().parent.parent / ".env")
+    # Load the repository-root .env by absolute path (container-safe: missing file is a
+    # no-op there; compose sets the real values).
+    load_dotenv(Path(__file__).resolve().parent.parent.parent / ".env")
     args = parse_args()
 
     payload = {
