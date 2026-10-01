@@ -179,13 +179,17 @@ class NameBuilder:
     def pool(self, name: str) -> list[str]:
         if name not in self._cache:
             path = self.pools_dir / f"{name}.txt"
+            try:
+                content = path.read_text(encoding="utf-8")
+            except OSError as exc:
+                raise ValueError(f"Cannot read pool file: {path} ({exc})") from exc
             words = [
                 line.strip()
-                for line in path.read_text(encoding="utf-8").splitlines()
+                for line in content.splitlines()
                 if line.strip()
             ]
             if not words:
-                raise ValueError(f"Missing or empty pool file: {path}")
+                raise ValueError(f"Empty pool file: {path}")
             self._cache[name] = words
         return self._cache[name]
 

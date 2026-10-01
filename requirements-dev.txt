@@ -1,0 +1,2 @@
+# -- dev/test tooling (CI + local runs) --
+pytest==8.3.3

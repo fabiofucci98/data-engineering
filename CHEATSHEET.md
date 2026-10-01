@@ -93,6 +93,8 @@ Key compose syntax (verified):
 | Activate (macOS/Linux) | `source .venv/bin/activate` |
 | Install | `pip install -r <stack>/requirements.txt` |
 | Syntax check | `python -m py_compile <script.py>` |
+| Unit tests | `pytest -m "not integration"` (needs `pip install -r requirements-dev.txt`; no Docker/network) |
+| Integration tests (needs a Postgres) | `$env:RUN_INTEGRATION="1"; $env:CITY_POSTGRES_HOST="localhost"; $env:CITY_POSTGRES_PORT="5434"; $env:CITY_POSTGRES_DB="city"; pytest -m integration` |
 
 Dependency gotchas (each cost time once — see devlog):
 - **SQLAlchemy defaults to `psycopg2`**, but we use psycopg v3 → connection URL must be

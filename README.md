@@ -144,6 +144,10 @@ ScientificDataPlatform/
 ├── devlog/                 ← chronological project journal
 ├── notes/                  ← future plans & ideas (not yet implemented)
 ├── .cline/rules/           ← rules loaded by Cline / agents working here
+├── .github/workflows/ci.yml← GitHub Actions: unit + integration (real Postgres) + config checks
+├── tests/                  ← pytest suites (unit + integration markers)
+├── pytest.ini              ← pytest config (testpaths, pythonpath, integration marker)
+├── requirements-dev.txt    ← test tooling (pytest)
 ├── docker-compose.yml      ← SHARED: pgAdmin + shared network (both stacks join it)
 ├── pgadmin/                ← shared pgAdmin seed: servers.json (auto-registers both DBs)
 ├── .env.example            ← env template; copy to .env (git-ignored)
@@ -178,6 +182,21 @@ ScientificDataPlatform/
 - **Simulation:** own deterministic generator (`city-simulation/citygen`) — planning formulas + word pools, no AI
 - **AI assistance (dev workflow):** OpenRouter as the LLM provider
 - **Current stack details:** see [`TECHNOLOGIES.md`](TECHNOLOGIES.md)
+
+## 🧪 Tests
+
+`pytest` runs in two tiers (also enforced in CI — see `.github/workflows/ci.yml`):
+
+- **Unit tests** (no network, no Docker): `pytest -m "not integration"` — city-planning
+  formulas, grid derivation, name-pool determinism/explosion, USGS GeoJSON parsing.
+- **Integration tests** (real Postgres): `RUN_INTEGRATION=1 pytest -m integration` —
+  fresh city → counts match the plan → identical re-run is a no-op → different
+  seed/population is refused.
+- Plus `python -m py_compile` over the scripts and `docker compose config --quiet` for
+  all three compose files in CI.
+
+Local install for tests: `pip install -r requirements-dev.txt` (plus a stack's
+`requirements.txt`).
 
 ## 📓 Devlog
 
