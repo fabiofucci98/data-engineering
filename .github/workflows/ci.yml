@@ -61,6 +61,7 @@ jobs:
           python-version: "3.13"
       - name: Install dependencies
         run: |
+          pip install -r scientific-data/earthquakes/requirements.txt
           pip install -r city-simulation/citygen/requirements.txt
           pip install -r requirements-dev.txt
       - name: Integration tests (fresh city -> idempotent rerun -> refusals)

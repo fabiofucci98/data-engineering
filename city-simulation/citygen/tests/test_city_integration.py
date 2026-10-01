@@ -13,9 +13,10 @@ import pytest
 
 pytestmark = pytest.mark.integration
 
-REPO = Path(__file__).resolve().parents[1]
-GENERATE = REPO / "city-simulation" / "citygen" / "generate.py"
-CITY_SQL = REPO / "city-simulation" / "sql" / "city.sql"
+CITYGEN_DIR = Path(__file__).resolve().parents[1]  # city-simulation/citygen
+GENERATE = CITYGEN_DIR / "generate.py"
+CITY_SQL = CITYGEN_DIR.parent / "sql" / "city.sql"  # city-simulation/sql/city.sql
+REPO = CITYGEN_DIR.parent.parent  # repo root (subprocess cwd)
 
 
 def _env(key: str, default: str) -> str:

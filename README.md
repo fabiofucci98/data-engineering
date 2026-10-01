@@ -145,8 +145,8 @@ ScientificDataPlatform/
 ├── notes/                  ← future plans & ideas (not yet implemented)
 ├── .cline/rules/           ← rules loaded by Cline / agents working here
 ├── .github/workflows/ci.yml← GitHub Actions: unit + integration (real Postgres) + config checks
-├── tests/                  ← pytest suites (unit + integration markers)
-├── pytest.ini              ← pytest config (testpaths, pythonpath, integration marker)
+├── conftest.py             ← pytest plumbing (integration skipped unless RUN_INTEGRATION=1)
+├── pytest.ini              ← pytest config (per-component testpaths, markers)
 ├── requirements-dev.txt    ← test tooling (pytest)
 ├── docker-compose.yml      ← SHARED: pgAdmin + shared network (both stacks join it)
 ├── pgadmin/                ← shared pgAdmin seed: servers.json (auto-registers both DBs)
@@ -160,7 +160,8 @@ ScientificDataPlatform/
 │       ├── Dockerfile      ← image for ingest + dashboard
 │       ├── ingest.py       ← USGS API → Postgres (idempotent upsert)
 │       ├── dashboard.py    ← Streamlit dashboard
-│       └── requirements.txt← pinned Python dependencies
+│       ├── requirements.txt← pinned Python dependencies
+│       └── tests/          ← ingest/parsing unit tests (offline)
 ├── city-simulation/        ← pipeline 2: simulated city (own Postgres, own compose)
 │   ├── docker-compose.yml  ← services: city-db (Postgres 16, host :5434) + citygen
 │   ├── CHEATSHEET.md       ← stack commands (generate, dry-run, psql, pools)
@@ -169,7 +170,8 @@ ScientificDataPlatform/
 │   ├── citygen/
 │   │   ├── Dockerfile      ← image for the generator
 │   │   ├── generate.py     ← deterministic generator (formulas + pools + fill loop)
-│   │   └── requirements.txt← pinned Python dependencies
+│   │   ├── requirements.txt← pinned Python dependencies
+│   │   └── tests/          ← planner + name-pool unit tests + DB integration tests
 │   └── pools/              ← steam-punk name pools (one word per line; editable)
 └── data/                   ← raw / processed data notes (never commit payloads)
 ```
@@ -185,7 +187,9 @@ ScientificDataPlatform/
 
 ## 🧪 Tests
 
-`pytest` runs in two tiers (also enforced in CI — see `.github/workflows/ci.yml`):
+`pytest` runs in two tiers (also enforced in CI — see `.github/workflows/ci.yml`).
+Each component keeps its tests next to it: `city-simulation/citygen/tests/` and
+`scientific-data/earthquakes/tests/` (shared plumbing in the root `conftest.py`):
 
 - **Unit tests** (no network, no Docker): `pytest -m "not integration"` — city-planning
   formulas, grid derivation, name-pool determinism/explosion, USGS GeoJSON parsing.

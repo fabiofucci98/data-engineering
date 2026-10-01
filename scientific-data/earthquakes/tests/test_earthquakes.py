@@ -1,6 +1,12 @@
 """Unit tests for the USGS ingest helpers (offline — no network)."""
 from datetime import timezone
 
+import pytest
+
+# ingest.py imports `requests` at module level; skip this module (not fail
+# collection) when a job didn't install the earthquakes requirements.
+pytest.importorskip("requests")
+
 from ingest import normalize, parse_iso
 
 
