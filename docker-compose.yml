@@ -7,12 +7,11 @@
 # service name (sci-db:5432, city-db:5432).
 #
 # Order: bring this up first, then the stacks.
-name: scientific-data-platform
+name: data-engineering
 
 services:
   pgadmin:
     image: dpage/pgadmin4:latest
-    container_name: sdp-pgadmin
     restart: unless-stopped
     environment:
       PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-admin@example.com}
